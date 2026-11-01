@@ -1,7 +1,7 @@
 # AutoLarp
 Larping for cars.
 
-Live site: https://autolarp.onrender.com/
+Live site: https://autolarp2.onrender.com/
 
 ## Run it
 
