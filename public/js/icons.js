@@ -53,5 +53,7 @@ const ICONS = {
   parking: svg('<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M10 17V7h3a3 3 0 010 6h-3"/>'),
   mountain: svg('<path d="M2 20l7-12 4 6 3-4 6 10z"/>'),
   tent: svg('<path d="M12 4L3 20h18z"/><path d="M12 4v16M9 20l3-6 3 6"/>'),
+  close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
+  send: svg('<path d="M4 12l16-8-6 16-2.5-6.5z"/><path d="M11.5 13.5L20 4"/>'),
   location: svg('<path d="M12 21s-7-6-7-11a7 7 0 0114 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>'),
 };

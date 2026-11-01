@@ -18,9 +18,13 @@
     <a class="icon-btn back-btn" href="./" aria-label="Back" id="back"></a>
 
     <section class="profile-top">
-      <div class="big-avatar" id="bigAvatar"></div>
+      <label class="big-avatar" aria-label="Change profile picture">
+        <span class="avatar-img" id="bigAvatar"></span>
+        <span class="avatar-badge" id="avatarBadge"></span>
+        <input type="file" accept="image/*" id="avatarFile">
+      </label>
       <button class="pname" id="pname"></button>
-      <div class="since" id="since"></div>
+      <button class="link-btn" id="removeAvatar" hidden>Remove photo</button>
     </section>
 
     <div class="section-label">Vehicles</div>
@@ -42,6 +46,7 @@
     <div class="group" id="extras"></div>
 
     <div class="group">
+      <button class="row danger" id="signout"><div class="txt"><div class="t"><span>Sign Out</span></div></div></button>
       <button class="row danger" id="reset"><div class="txt"><div class="t"><span>Reset All Data</span></div></div></button>
     </div>
   </main>
@@ -156,6 +161,7 @@
   <script src="js/db.js"></script>
   <script src="js/brands.js"></script>
   <script src="js/icons.js"></script>
+  <script src="js/cropper.js"></script>
   <script src="js/profile.js"></script>
 </body>
 </html>

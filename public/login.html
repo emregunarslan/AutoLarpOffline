@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#17181b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg">
+  <title>Sign In</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="app login">
+    <div class="login-mark" id="mark"></div>
+    <h1 class="login-title" id="heading">Welcome back</h1>
+    <p class="login-sub" id="sub">Sign in to access your vehicles</p>
+
+    <div class="segmented login-tabs" id="tabs">
+      <button type="button" data-v="login" class="sel">Sign In</button>
+      <button type="button" data-v="signup">Create Account</button>
+    </div>
+
+    <form id="form" autocomplete="on">
+      <div class="field-label">Username</div>
+      <input class="input" id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20" required>
+
+      <div class="field-label">Password</div>
+      <input class="input" id="password" name="password" type="password" autocomplete="current-password" maxlength="100" required>
+
+      <div id="confirmWrap" hidden>
+        <div class="field-label">Confirm Password</div>
+        <input class="input" id="confirm" type="password" autocomplete="new-password" maxlength="100">
+      </div>
+
+      <div class="form-error" id="error"></div>
+      <button class="btn" type="submit" id="submit">Sign In</button>
+    </form>
+  </main>
+
+  <script src="js/db.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

@@ -1,24 +1,63 @@
 (async function () {
   const $ = (id) => document.getElementById(id);
   $('back').innerHTML = ICONS.back;
-  $('dropHint').innerHTML = `${ICONS.camera}Upload a photo of your vehicle`;
+  $('dropHint').innerHTML = `${ICONS.camera}Upload a photo of your vehicle<small>Up to 30 MB · you can crop it next</small>`;
 
   // ---------- Profile header ----------
   let profile = await DB.getProfile();
   function renderProfile() {
-    $('bigAvatar').innerHTML = profile.name === 'Owner' ? ICONS.user : escapeHtml(initials(profile.name));
-    $('bigAvatar').querySelector('svg')?.setAttribute('style', 'width:40px;height:40px;color:#8e8e93');
+    $('bigAvatar').innerHTML = avatarHtml(profile);
+    $('removeAvatar').hidden = !profile.avatar;
     $('pname').innerHTML = `${escapeHtml(profile.name)}${ICONS.pencil}`;
-    const year = new Date(profile.memberSince).getFullYear();
-    $('since').textContent = `Owner since ${year}`;
   }
   renderProfile();
-  $('pname').onclick = async () => {
-    const name = prompt('Your name', profile.name === 'Owner' ? '' : profile.name);
-    if (name === null) return;
-    profile.name = name.trim() || 'Owner';
-    await DB.saveProfile(profile);
+
+  // Tap the avatar to pick, crop and save a profile picture.
+  $('avatarBadge').innerHTML = ICONS.camera;
+  $('avatarFile').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const avatar = await Cropper.cropPhoto(file, { width: 512, height: 512, round: true });
+      if (!avatar) return;
+      profile = await DB.saveProfile({ avatar });
+      renderProfile();
+    } catch (err) {
+      alert(err.message || 'Could not use that photo. Try another one.');
+    }
+  });
+  $('removeAvatar').onclick = async () => {
+    if (!confirm('Remove your profile picture?')) return;
+    profile = await DB.saveProfile({ avatar: null });
     renderProfile();
+  };
+
+  // Tap the name to edit it in place (max NAME_MAX characters).
+  const pnameButton = $('pname');
+  pnameButton.onclick = () => {
+    const input = document.createElement('input');
+    input.className = 'name-input';
+    input.maxLength = NAME_MAX;
+    input.value = profile.name;
+    input.setAttribute('aria-label', 'Your name');
+    pnameButton.replaceWith(input);
+    input.focus();
+    input.select();
+    let done = false;
+    async function finish(save) {
+      if (done) return;
+      done = true;
+      const name = input.value.trim().slice(0, NAME_MAX);
+      if (save && name && name !== profile.name) profile = await DB.saveProfile({ name });
+      input.replaceWith(pnameButton);
+      renderProfile();
+    }
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') finish(true);
+      if (e.key === 'Escape') finish(false);
+    });
+    input.addEventListener('blur', () => finish(true));
   };
 
   // ---------- Decorative account rows ----------
@@ -421,10 +460,12 @@
   $('photo').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    $('photo').value = ''; // lets the same file be picked again
     try {
-      setPhoto(await resizeImage(file, 1400));
-    } catch {
-      alert('Could not read that image. Try another photo.');
+      const cropped = await Cropper.cropPhoto(file);
+      if (cropped) setPhoto(cropped);
+    } catch (err) {
+      alert(err.message || 'Could not read that image. Try another photo.');
     }
     validate();
   });
@@ -439,20 +480,27 @@
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    const existing = cars.find((c) => c.id === state.id);
-    await DB.saveCar({
-      ...(existing || {}),
-      id: state.id || undefined,
-      title: $('title').value.trim(),
-      description: $('desc').value.trim(),
-      location: $('location').value.trim(),
-      powertrain: state.powertrain,
-      bodyType: state.bodyType,
-      brand: state.brand,
-      photo: state.photo,
-    });
-    closeSheet();
-    renderVehicles();
+    $('save').disabled = true;
+    $('save').textContent = 'Saving…';
+    try {
+      await DB.saveCar({
+        id: state.id || undefined,
+        title: $('title').value.trim(),
+        description: $('desc').value.trim(),
+        location: $('location').value.trim(),
+        powertrain: state.powertrain,
+        bodyType: state.bodyType,
+        brand: state.brand,
+        photo: state.photo,
+      });
+      closeSheet();
+      renderVehicles();
+    } catch (err) {
+      $('formError').textContent = err.message;
+    } finally {
+      $('save').disabled = false;
+      $('save').textContent = 'Save';
+    }
   });
 
   $('remove').onclick = async () => {
@@ -462,30 +510,16 @@
     renderVehicles();
   };
 
-  // Downscale the uploaded photo so storage stays small.
-  function resizeImage(file, maxSide) {
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => {
-        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        URL.revokeObjectURL(url);
-        resolve(canvas.toDataURL('image/jpeg', 0.85));
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(); };
-      img.src = url;
-    });
-  }
-
   // ---------- Reset ----------
   $('reset').onclick = async () => {
-    if (!confirm('Reset all data? This removes every vehicle and your profile from this device.')) return;
+    if (!confirm('Reset all data? This removes every vehicle from your account and resets your name.')) return;
     await DB.resetAll();
     resetColors();
     location.replace('./');
+  };
+
+  $('signout').onclick = async () => {
+    await DB.logout();
+    location.replace('login.html');
   };
 })();
