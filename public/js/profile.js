@@ -60,17 +60,21 @@
     input.addEventListener('blur', () => finish(true));
   };
 
-  // ---------- Decorative account rows ----------
+  // ---------- Account rows (each opens a screen from subpages.js) ----------
   $('extras').innerHTML = [
-    ['card', 'Payment Methods'],
-    ['key', 'Keys & Drivers'],
-    ['bell', 'Notifications'],
-    ['shield', 'Privacy & Security'],
-    ['help', 'Support'],
-  ].map(([icon, label]) => `
-    <button class="row"><span class="ico">${ICONS[icon]}</span>
+    ['payment', 'card', 'Payment Methods'],
+    ['keys', 'key', 'Keys & Drivers'],
+    ['notifications', 'bell', 'Notifications'],
+    ['privacy', 'shield', 'Privacy & Security'],
+    ['support', 'help', 'Support'],
+  ].map(([page, icon, label]) => `
+    <button class="row" data-page="${page}"><span class="ico">${ICONS[icon]}</span>
       <div class="txt"><div class="t"><span>${label}</span></div></div>
       <span class="chev">${ICONS.chev}</span></button>`).join('');
+  $('extras').addEventListener('click', (e) => {
+    const row = e.target.closest('[data-page]');
+    if (row) Subpages.open(row.dataset.page, profile);
+  });
 
   // ---------- Vehicle list ----------
   let cars = [];
