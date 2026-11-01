@@ -9,7 +9,6 @@
     $('bigAvatar').innerHTML = avatarHtml(profile);
     $('removeAvatar').hidden = !profile.avatar;
     $('pname').innerHTML = `${escapeHtml(profile.name)}${ICONS.pencil}`;
-    $('username').textContent = `@${profile.username}`;
   }
   renderProfile();
 

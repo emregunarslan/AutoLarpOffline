@@ -19,6 +19,7 @@ const DB = (() => {
   return {
     api,
     getCars: () => api('GET', '/cars'),
+    getCarSummaries: () => api('GET', '/cars?summary=1'), // no photos
     getCar: (id) => api('GET', `/cars/${encodeURIComponent(id)}`).catch(() => null),
     saveCar: (car) => (car.id
       ? api('PUT', `/cars/${encodeURIComponent(car.id)}`, car)

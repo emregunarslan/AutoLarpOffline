@@ -61,6 +61,7 @@
 
   function open() {
     document.body.classList.add('chat-open');
+    carsPromise ??= DB.getCarSummaries().catch(() => []); // start loading before the first message
     if (!log.children.length) {
       bubble({ role: 'assistant', content: 'Hi! I can run your vehicle controls or help you pick the right car for the trip. What do you need?' });
       history.forEach(bubble);
@@ -72,7 +73,7 @@
 
   // Live readings shown in the app, so the assistant can talk about range and fuel.
   async function readings() {
-    carsPromise ??= DB.getCars();
+    carsPromise ??= DB.getCarSummaries();
     const stats = {};
     for (const car of await carsPromise) {
       const { pct, km, fuel } = vehicleStats(car);

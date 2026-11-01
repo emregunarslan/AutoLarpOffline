@@ -17,7 +17,7 @@
     const electric = powertrainOf(car) === 'electric';
     const gauge = electric
       ? `<span class="battery"><i style="width:${pct}%"></i></span>${pct}%`
-      : `<span class="gauge-ico">${ICONS.fuel}</span>Estimated fuel`;
+      : `<span class="gauge-ico">${ICONS.fuel}</span>${fuel}%`;
     return `
       <a class="car-card" href="car.html?id=${encodeURIComponent(car.id)}"
          style="background-image:url('${car.photo}');animation-delay:${i * 60}ms">

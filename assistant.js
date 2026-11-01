@@ -116,6 +116,23 @@ function replyText(response) {
 
 export function assistantRoutes(app, { requireUser, cars }) {
   let ai = null;
+  // Minimal thinking keeps replies fast; turned off automatically if the model rejects it.
+  let fastThinking = true;
+
+  async function generate(contents, system) {
+    const config = { systemInstruction: system, tools: [{ functionDeclarations: [CONTROL_TOOL] }] };
+    if (!fastThinking) return ai.models.generateContent({ model: MODEL, contents, config });
+    try {
+      return await ai.models.generateContent({
+        model: MODEL, contents, config: { ...config, thinkingConfig: { thinkingLevel: 'MINIMAL' } },
+      });
+    } catch (err) {
+      if (!(err instanceof ApiError) || err.status !== 400) throw err;
+      fastThinking = false;
+      console.warn(`${MODEL} rejected thinkingLevel MINIMAL; using its default thinking.`);
+      return ai.models.generateContent({ model: MODEL, contents, config });
+    }
+  }
 
   app.post('/api/assistant', requireUser, async (req, res, next) => {
     try {
@@ -158,14 +175,7 @@ export function assistantRoutes(app, { requireUser, cars }) {
 
       let reply = '';
       for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-        const response = await ai.models.generateContent({
-          model: MODEL,
-          contents,
-          config: {
-            systemInstruction: system,
-            tools: [{ functionDeclarations: [CONTROL_TOOL] }],
-          },
-        });
+        const response = await generate(contents, system);
 
         const candidate = response.candidates?.[0];
         if (response.promptFeedback?.blockReason || !candidate?.content) {
@@ -176,17 +186,22 @@ export function assistantRoutes(app, { requireUser, cars }) {
         const calls = response.functionCalls || [];
         if (!calls.length) break;
 
-        // Send the model's turn back unchanged, then one response per function call.
+        const outcomes = calls.map((call) => (call.name === 'control_vehicle'
+          ? runControl(call.args) : { error: `Unknown function ${call.name}` }));
+
+        // Every command worked: answer now instead of asking the model to say "done"
+        // (the action chips in the chat show what happened).
+        if (outcomes.every((o) => !o.error)) {
+          reply ||= 'All set.';
+          break;
+        }
+
+        // Something failed: send the model's turn back unchanged, plus one response
+        // per function call, so it can explain or try something else.
         contents.push(candidate.content);
         contents.push({
           role: 'user',
-          parts: calls.map((call) => ({
-            functionResponse: {
-              id: call.id,
-              name: call.name,
-              response: call.name === 'control_vehicle' ? runControl(call.args) : { error: `Unknown function ${call.name}` },
-            },
-          })),
+          parts: calls.map((call, i) => ({ functionResponse: { id: call.id, name: call.name, response: outcomes[i] } })),
         });
       }
 

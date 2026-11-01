@@ -493,8 +493,7 @@ textarea.input { resize: none; min-height: 96px; line-height: 1.4; }
 .srow b { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
 .status-card .tires-title { margin-bottom: 12px; }
 
-/* ---------- Profile name / username ---------- */
-.profile-top .username { color: var(--muted); font-size: 14px; margin-top: 4px; }
+/* ---------- Profile name ---------- */
 .name-input {
   font: inherit; font-size: 22px; font-weight: 700; text-align: center;
   color: var(--text); background: var(--surface);

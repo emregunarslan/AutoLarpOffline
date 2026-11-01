@@ -220,8 +220,10 @@ app.patch('/api/me', requireUser, route(async (req, res) => {
   res.json(publicUser({ ...req.user, ...set }));
 }));
 
+// ?summary=1 leaves out photos (used by the assistant, which only needs the details).
 app.get('/api/cars', requireUser, route(async (req, res) => {
-  const list = await cars.find({ userId: req.user._id }).sort({ createdAt: 1 }).toArray();
+  const projection = req.query.summary ? { photo: 0 } : {};
+  const list = await cars.find({ userId: req.user._id }, { projection }).sort({ createdAt: 1 }).toArray();
   res.json(list.map(publicCar));
 }));
 
