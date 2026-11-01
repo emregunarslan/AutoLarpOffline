@@ -7,6 +7,7 @@ import path from 'node:path';
 import readline from 'node:readline/promises';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import './public/js/brands.js';
 import { assistantRoutes } from './assistant.js';
 import { ttsRoutes } from './tts.js';
 import { geocodeRoutes } from './geocode.js';
@@ -111,10 +112,8 @@ function recordFailure(key) {
 
 const USERNAME_RE = /^[a-zA-Z0-9_.]{3,20}$/;
 const NAME_MAX = 24;
-const BRANDS = new Set(['tesla', 'porsche', 'ferrari', 'lamborghini', 'mclaren', 'rollsroyce', 'bentley',
-  'astonmartin', 'bugatti', 'maserati', 'mercedes', 'bmw', 'audi', 'lexus', 'cadillac', 'lucid', 'rivian',
-  'polestar', 'landrover', 'jaguar', 'volvo', 'genesis', 'toyota', 'honda', 'ford', 'chevrolet', 'dodge',
-  'jeep', 'nissan', 'hyundai', 'kia', 'mazda', 'subaru', 'volkswagen']);
+// Allowed brands = the picker's list in public/js/brands.js (one source of truth).
+const BRANDS = new Set(globalThis.CarBrands.BRANDS.map((b) => b.slug));
 
 // Returns a clean car object, or a string describing what's wrong.
 // GPS position from "Use my current location", or null.

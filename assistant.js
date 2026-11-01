@@ -4,24 +4,16 @@
 // to the browser, which plays it out on the car's buttons.
 import { GoogleGenAI, ApiError } from '@google/genai';
 import './public/js/themes.js';
+import './public/js/brands.js';
 
 const { controlDefs, controlLayout, brandTheme } = globalThis.CarControls;
+const { brandBySlug } = globalThis.CarBrands;
 
 // 'gemini-flash-latest' always points at Google's current Flash model; override with GEMINI_MODEL.
 const MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 const MAX_TOOL_ROUNDS = 6;
 const MAX_HISTORY = 20;
 const MAX_MESSAGE_CHARS = 1000;
-
-const BRAND_NAMES = {
-  tesla: 'Tesla', porsche: 'Porsche', ferrari: 'Ferrari', lamborghini: 'Lamborghini', mclaren: 'McLaren',
-  rollsroyce: 'Rolls-Royce', bentley: 'Bentley', astonmartin: 'Aston Martin', bugatti: 'Bugatti',
-  maserati: 'Maserati', mercedes: 'Mercedes-Benz', bmw: 'BMW', audi: 'Audi', lexus: 'Lexus',
-  cadillac: 'Cadillac', lucid: 'Lucid', rivian: 'Rivian', polestar: 'Polestar', landrover: 'Land Rover',
-  jaguar: 'Jaguar', volvo: 'Volvo', genesis: 'Genesis', toyota: 'Toyota', honda: 'Honda', ford: 'Ford',
-  chevrolet: 'Chevrolet', dodge: 'Dodge', jeep: 'Jeep', nissan: 'Nissan', hyundai: 'Hyundai', kia: 'Kia',
-  mazda: 'Mazda', subaru: 'Subaru', volkswagen: 'Volkswagen',
-};
 
 const ALL_CONTROL_KEYS = Object.keys(controlDefs({}));
 
@@ -73,7 +65,7 @@ function describeGarage(cars, stats, currentId) {
     const lines = [
       `- id: ${car.id}${car.id === currentId ? '  (CURRENT — the owner is looking at this vehicle)' : ''}`,
       `  name: ${JSON.stringify(car.title)}`,
-      `  brand: ${BRAND_NAMES[car.brand] || car.brand}`,
+      `  brand: ${brandBySlug(car.brand).name}`,
       car.description && `  description: ${JSON.stringify(car.description)}`,
       `  body type: ${car.bodyType || 'sedan'}`,
       `  powertrain: ${electric ? 'electric' : 'gas'}`,

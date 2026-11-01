@@ -113,3 +113,7 @@ function logoHtml(slug, cls = 'logo') {
   return `<span class="${cls}"><img src="${logoUrl(b.slug)}" alt="${escapeHtml(b.name)}" loading="lazy"
     onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'fallback',textContent:'${initials(b.name)}'}))"></span>`;
 }
+
+// Lets the server import this file, so the picker, the server's validation and
+// the assistant all use this one list.
+globalThis.CarBrands = { BRANDS, brandBySlug };
