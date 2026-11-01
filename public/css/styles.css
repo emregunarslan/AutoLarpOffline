@@ -21,6 +21,8 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+html { overscroll-behavior: none; }
+
 html, body {
   margin: 0;
   background-color: var(--bg);
@@ -68,6 +70,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .icon-btn svg { width: 24px; height: 24px; }
 
 .avatar-btn {
+  flex: none; /* a long greeting must never squeeze the initials into an oval */
   width: 44px; height: 44px;
   border-radius: 50%;
   background: var(--surface);
@@ -121,21 +124,19 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto 1fr auto;
 }
-.car-card .title-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.car-card .title-row { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .car-card .title {
   font-size: 24px; font-weight: 700; letter-spacing: -.3px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .car-card .status { grid-column: 1; font-size: 14px; font-weight: 500; color: rgba(255,255,255,.75); margin-top: 2px; }
-.car-card .stat { grid-column: 2; grid-row: 1 / span 2; text-align: right; font-size: 40px; font-weight: 300; line-height: 1; letter-spacing: -1px; }
-.car-card .stat small { font-size: 18px; font-weight: 400; margin-left: 2px; }
 .car-card .desc {
   grid-column: 1; grid-row: 3;
   font-size: 15px; font-weight: 500; color: rgba(255,255,255,.9);
   display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
   padding-right: 8px;
 }
-.car-card .batt { grid-column: 2; grid-row: 3; align-self: end; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+.car-card .batt { grid-column: 2; grid-row: 3; align-self: end; display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 18px; font-weight: 600; }
 
 .battery {
   position: relative;
@@ -177,8 +178,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .car-hero img {
   width: 100%; height: 100%;
   object-fit: cover;
-  -webkit-mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%);
-          mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%);
+  border-radius: 26px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 78% at 50% 50%, #000 60%, transparent 100%);
+          mask-image: radial-gradient(ellipse 80% 78% at 50% 50%, #000 60%, transparent 100%);
 }
 .car-hero::after {
   content: ""; position: absolute; left: 18%; right: 18%; bottom: 14px; height: 24px;
@@ -691,7 +693,6 @@ textarea.input { resize: none; min-height: 96px; line-height: 1.4; }
 .mini-card.photo { background-color: #0a0b10; }
 .mini-inner { position: relative; height: 100%; padding: 6px 7px; display: flex; flex-direction: column; justify-content: space-between; }
 .mini-title { padding-right: 24px; font-size: 8.5px; font-weight: 700; letter-spacing: -.1px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mini-stat { position: absolute; top: 5px; right: 7px; font-size: 11px; font-weight: 300; letter-spacing: -.4px; color: #fff; }
 .mini-sub { font-size: 6px; font-weight: 600; color: rgba(255,255,255,.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .mini-frame.preview-frame { width: min(230px, 62vw); box-shadow: 0 18px 44px rgba(0,0,0,.4); }
@@ -705,7 +706,6 @@ textarea.input { resize: none; min-height: 96px; line-height: 1.4; }
 .preview-frame .mini-card { border-radius: 13px; }
 .preview-frame .mini-inner { padding: 8px 9px; }
 .preview-frame .mini-title { padding-right: 32px; font-size: 11px; }
-.preview-frame .mini-stat { top: 7px; right: 9px; font-size: 15px; }
 .preview-frame .mini-sub { font-size: 8px; }
 
 .theme-hint { margin: 0; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.4; }
@@ -870,6 +870,22 @@ textarea.input { resize: none; min-height: 96px; line-height: 1.4; }
 .chat-send svg { width: 20px; height: 20px; }
 body:has(.chat-fab) .app { padding-bottom: calc(var(--safe-bottom) + 100px); }
 
+/* ---------- Fullscreen toggle ---------- */
+.fullscreen-btn {
+  position: fixed; z-index: 15;
+  left: 50%; bottom: calc(var(--safe-bottom) + 18px);
+  transform: translateX(-50%);
+  width: 42px; height: 42px; border-radius: 50%;
+  background: color-mix(in srgb, var(--surface-2) 96%, transparent);
+  backdrop-filter: blur(10px);
+  color: var(--text-2);
+  display: grid; place-items: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.08);
+}
+.fullscreen-btn svg { width: 20px; height: 20px; }
+.fullscreen-btn:active { transform: translateX(-50%) scale(.9); }
+.fullscreen-btn.off { display: none; }
+
 /* ---------- Account screens (slide in from the right) ---------- */
 .subpage {
   position: fixed; inset: 0; z-index: 25;
@@ -908,39 +924,27 @@ body:has(.chat-fab) .app { padding-bottom: calc(var(--safe-bottom) + 100px); }
 .app-version { text-align: center; color: var(--muted); font-size: 13px; margin: 8px 0 0; }
 
 .pay-card {
-  aspect-ratio: 1.586; border-radius: 18px; padding: 20px 22px; margin-bottom: 26px;
-  display: flex; flex-direction: column; justify-content: space-between;
-  background: linear-gradient(135deg, #2c3550, #12141c 70%);
-  border: 1px solid rgba(255,255,255,.08);
+  aspect-ratio: 1.586; border-radius: 18px; margin-bottom: 26px;
+  position: relative;
   box-shadow: 0 16px 40px rgba(0,0,0,.45);
 }
-.pay-top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); font-weight: 600; }
-.pay-top b { font-size: 22px; font-style: italic; letter-spacing: 1px; color: #fff; }
-.pay-number { font-size: 21px; letter-spacing: 2px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.pay-bottom { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: #d6d8de; }
+.pay-card.platinum {
+  background: #dfe1e4 url('amexplat.png') center/cover no-repeat;
+  border: 1px solid rgba(255,255,255,.5);
+}
+/* The user's name over the card's bottom-left, covering the baked-in cardholder */
+.pay-card-name {
+  position: absolute; left: 8%; bottom: 7.5%;
+  min-width: 32%; max-width: 60%;
+  font-size: 13px; font-weight: 800; letter-spacing: .5px;
+  color: #22252a; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 4px 9px; border-radius: 5px;
+  background: linear-gradient(135deg, rgba(236,237,239,.9), rgba(203,206,211,.78));
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 4px rgba(0,0,0,.28);
+}
 .subpage-toast { white-space: normal; width: max-content; max-width: calc(100% - 40px); text-align: center; border-radius: 18px; line-height: 1.35; }
-
-/* Black Amex look for the saved card */
-.pay-card.amex-black {
-  background:
-    linear-gradient(115deg, transparent 35%, rgba(255,255,255,.07) 48%, transparent 60%),
-    repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 2px, transparent 2px 4px),
-    linear-gradient(145deg, #2a2a2c, #0b0b0c 60%, #161617);
-  border: 1px solid rgba(255,255,255,.12);
-  color: #d9d9dc;
-}
-.amex-black .pay-top span { color: #a9a9ad; letter-spacing: 1.5px; text-transform: uppercase; font-size: 12px; }
-.amex-black .pay-top b {
-  font-style: normal; font-size: 15px; letter-spacing: 2px; color: #e8e8ea;
-  border: 1.5px solid #c9c9cc; border-radius: 4px; padding: 3px 8px;
-}
-.pay-chip {
-  width: 44px; height: 33px; border-radius: 6px; margin-top: -6px;
-  background: linear-gradient(135deg, #d9d9dc, #8e8e93 55%, #c4c4c8);
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
-}
-.amex-black .pay-number { color: #e2e2e5; letter-spacing: 3px; }
-.amex-black .pay-bottom { color: #b9b9be; font-size: 13px; }
 .chat-head-actions { display: flex; gap: 8px; }
 .chat-voice { width: 36px; height: 36px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; color: var(--muted); }
 .chat-voice svg { width: 18px; height: 18px; }

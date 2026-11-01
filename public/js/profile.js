@@ -170,13 +170,12 @@
           title: c.title,
           sub: c.description || brandBySlug(c.brand).name,
           photo: c.photo,
-          stat: km === null ? `${fuel}%` : `${km}km`,
         };
       });
     }
     return [
-      { title: 'Grand Tourer', sub: 'Your dream garage', photo: null, stat: '86%' },
-      { title: 'Weekend Car', sub: 'Ready for a drive', photo: null, stat: '64%' },
+      { title: 'Grand Tourer', sub: 'Your dream garage', photo: null },
+      { title: 'Weekend Car', sub: 'Ready for a drive', photo: null },
     ];
   }
 
@@ -189,7 +188,6 @@
       <div class="mini-card${c.photo ? ' photo' : ''}"${c.photo ? ` style="background-image:url('${c.photo}')"` : ''}>
         <div class="mini-inner">
           <div class="mini-title">${escapeHtml(c.title)}</div>
-          <div class="mini-stat">${escapeHtml(c.stat)}</div>
           <div class="mini-sub">${escapeHtml(c.sub)}</div>
         </div>
       </div>`).join('');

@@ -15,15 +15,16 @@
   list.innerHTML = cars.map((car, i) => {
     const { pct, km, fuel } = vehicleStats(car);
     const electric = powertrainOf(car) === 'electric';
+    // One reading per card, bottom right: battery icon + estimated range for
+    // electric, pump icon + estimated fuel for gas.
     const gauge = electric
-      ? `<span class="battery"><i style="width:${pct}%"></i></span>${pct}%`
-      : `<span class="gauge-ico">${ICONS.fuel}</span>${fuel}%`;
+      ? `<span class="battery"><i style="width:${pct}%"></i></span>${km}<small>km</small>`
+      : `<span class="gauge-ico">${ICONS.fuel}</span>${fuel}<small>%</small>`;
     return `
       <a class="car-card" href="car.html?id=${encodeURIComponent(car.id)}"
          style="background-image:url('${car.photo}');animation-delay:${i * 60}ms">
         <div class="inner">
           <div class="title-row">${logoHtml(car.brand)}<span class="title">${escapeHtml(car.title)}</span></div>
-          <div class="stat">${electric ? `${km}<small>km</small>` : `${fuel}<small>%</small>`}</div>
           <div class="status">${escapeHtml(car.location || DEFAULT_LOCATION)}</div>
           <div class="desc">${escapeHtml(car.description || brandBySlug(car.brand).name)}</div>
           <div class="batt">${gauge}</div>

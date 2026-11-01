@@ -39,14 +39,13 @@ const Subpages = (() => {
   const PAGES = {
     payment: {
       title: 'Payment Methods',
+      // The card face shows the current profile name; it re-renders each time
+      // the screen opens, so a name change shows up on the card right away.
       render: ({ name }) => `
-        <div class="pay-card amex-black">
-          <div class="pay-top"><span>American Express</span><b>AMEX</b></div>
-          <div class="pay-chip"></div>
-          <div class="pay-number">•••• •••••• •1005</div>
-          <div class="pay-bottom"><span>${escapeHtml(name)}</span><span>11/30</span></div>
+        <div class="pay-card platinum">
+          <span class="pay-card-name">${escapeHtml(String(name || '').toUpperCase())}</span>
         </div>
-        ${group('Cards', row('card', 'Amex Black ending 1005', 'Default · Expires 11/30', { chev: false, extra: '<span class="pill">Default</span>' }) +
+        ${group('Cards', row('card', 'Amex Platinum ending 1005', 'Default · Expires 11/30', { chev: false, extra: '<span class="pill">Default</span>' }) +
           row('plus', 'Add Payment Method', '', { action: 'addCard' }))}
         ${group('Billing', row('location', 'Billing Address', escapeHtml(DEFAULT_LOCATION), { action: 'autopay' }) +
           toggle('autopay', 'Auto-pay', 'Charging, fuel and service charges', true))}`,
