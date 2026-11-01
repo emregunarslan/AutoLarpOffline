@@ -66,7 +66,7 @@ function powertrainOf(car) {
   return POWERTRAINS[car.powertrain] ? car.powertrain : 'electric';
 }
 
-const BODY_TYPES = { sedan: 'Sedan', suv: 'SUV', truck: 'Truck' };
+const BODY_TYPES = { sedan: 'Sedan', coupe: 'Coupe', suv: 'SUV', truck: 'Truck' };
 
 function bodyTypeOf(car) {
   return BODY_TYPES[car.bodyType] ? car.bodyType : 'sedan';
