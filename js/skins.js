@@ -1,7 +1,7 @@
 // Custom garage gradient. Loaded in <head> on every page so the saved
 // primary/secondary colours are applied before the first paint.
 const COLORS_KEY = 'garage:colors';
-const DEFAULT_COLORS = { primary: '#3e6ae1', secondary: '#8b5cf6' };
+const DEFAULT_COLORS = { primary: '#1f3a68', secondary: '#c6a664' };
 const GRADIENT_BASE = '#0c0d12';
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
@@ -27,6 +27,42 @@ function colorLuminance(color) {
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
   });
   return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+}
+
+// HSV conversions for the custom picker.
+function colorToHsv(color) {
+  const [r8, g8, b8] = colorRgb(color);
+  const r = r8 / 255;
+  const g = g8 / 255;
+  const b = b8 / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0;
+  if (d) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  return { h, s: max ? d / max : 0, v: max };
+}
+
+function hsvToColor(h, s, v) {
+  const c = v * s;
+  const x = c * (1 - Math.abs(((h % 360) / 60) % 2 - 1));
+  const m = v - c;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  return colorHex([(r + m) * 255, (g + m) * 255, (b + m) * 255]);
 }
 
 // Keep the wallpaper dark enough for white text, whatever colours are picked.

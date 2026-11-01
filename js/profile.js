@@ -60,12 +60,34 @@
   // ---------- Custom gradient ----------
   $('themesIco').innerHTML = ICONS.palette;
   $('themesChev').innerHTML = ICONS.chev;
+  $('customIco').innerHTML = ICONS.palette;
+
+  // Luxury paint names make the picker read like a car configurator.
+  const COLOR_PRESETS = [
+    { hex: '#0d0d10', name: 'Obsidian' },
+    { hex: '#7b1e2b', name: 'Bordeaux' },
+    { hex: '#c1121f', name: 'Rosso' },
+    { hex: '#c6a664', name: 'Champagne' },
+    { hex: '#8a5a2b', name: 'Cognac' },
+    { hex: '#1c4b3b', name: 'Racing Green' },
+    { hex: '#1f3a68', name: 'Sapphire' },
+    { hex: '#b9bdc4', name: 'Platinum' },
+    { hex: '#f2efe9', name: 'Pearl' },
+  ];
+
+  // Presets are inserted before the static custom-color swatch.
+  $('palette').insertAdjacentHTML('afterbegin', COLOR_PRESETS.map((preset) => `
+    <button type="button" class="swatch" data-color="${preset.hex}" data-name="${escapeHtml(preset.name)}" style="--swatch:${preset.hex}"
+      title="${escapeHtml(preset.name)}" aria-label="${escapeHtml(preset.name)} ${preset.hex.toUpperCase()}" aria-pressed="false"></button>`).join(''));
 
   function colorSubtitle(colors) {
     return `${colors.primary.toUpperCase()} · ${colors.secondary.toUpperCase()}`;
   }
   $('themesSub').textContent = colorSubtitle(getColors());
   let draft = getColors();
+  let activeTarget = 'primary';
+  const picker = { h: 0, s: 0, v: 0 };
+  const clamp01 = (n) => Math.min(1, Math.max(0, n));
 
   // Samples keep the preview looking like a garage even before a car is added.
   function previewCars() {
@@ -105,19 +127,106 @@
       <div class="mini-list">${cards}</div>`;
   }
 
+  function renderTargets() {
+    document.querySelectorAll('.color-target').forEach((btn) => {
+      const on = btn.dataset.target === activeTarget;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-pressed', String(on));
+    });
+    $('paletteTitle').textContent = `${activeTarget === 'primary' ? 'Primary' : 'Secondary'} palette`;
+  }
+
+  function renderPaletteSelection() {
+    let custom = true;
+    let note = 'Custom color';
+    const current = draft[activeTarget].toLowerCase();
+    $('palette').querySelectorAll('[data-color]').forEach((swatch) => {
+      const on = swatch.dataset.color === current;
+      swatch.classList.toggle('sel', on);
+      swatch.setAttribute('aria-pressed', String(on));
+      if (on) {
+        custom = false;
+        note = swatch.dataset.name;
+      }
+    });
+    $('customSwatch').classList.toggle('sel', custom);
+    $('paletteNote').textContent = note;
+  }
+
   function paintPreview() {
     const vars = colorVars(draft);
     const frame = $('themePreviewFrame');
     Object.entries(vars).forEach(([key, value]) => frame.style.setProperty(key, value));
     $('gradientStrip').style.background = `linear-gradient(135deg, ${draft.primary}, ${draft.secondary})`;
-    $('primaryColor').value = draft.primary;
-    $('secondaryColor').value = draft.secondary;
+    $('primaryDot').style.background = draft.primary;
+    $('secondaryDot').style.background = draft.secondary;
     $('primaryHex').textContent = draft.primary.toUpperCase();
     $('secondaryHex').textContent = draft.secondary.toUpperCase();
+    renderTargets();
+    renderPaletteSelection();
+  }
+
+  function setPickerFromColor(hex) {
+    const hsv = colorToHsv(hex);
+    picker.h = hsv.h;
+    picker.s = hsv.s;
+    picker.v = hsv.v;
+  }
+
+  function renderPicker() {
+    const hex = hsvToColor(picker.h, picker.s, picker.v);
+    $('svArea').style.setProperty('--hue-color', hsvToColor(picker.h, 1, 1));
+    $('svHandle').style.left = `${picker.s * 100}%`;
+    $('svHandle').style.top = `${(1 - picker.v) * 100}%`;
+    $('svHandle').style.setProperty('--picked', hex);
+    $('hueHandle').style.left = `${(picker.h / 360) * 100}%`;
+    $('hueHandle').style.background = hsvToColor(picker.h, 1, 1);
+    $('pickerPreview').style.background = hex;
+    if (document.activeElement !== $('hexInput')) $('hexInput').value = hex.toUpperCase();
+    $('pickerTitle').textContent = `Custom ${activeTarget}`;
+  }
+
+  function applyPicker() {
+    const hex = hsvToColor(picker.h, picker.s, picker.v);
+    draft = { ...draft, [activeTarget]: hex };
+    paintPreview();
+    renderPicker();
+  }
+
+  function openCustomPicker() {
+    setPickerFromColor(draft[activeTarget]);
+    $('paletteHead').hidden = true;
+    $('palette').hidden = true;
+    $('themeHint').hidden = true;
+    $('customPicker').hidden = false;
+    $('customSwatch').setAttribute('aria-expanded', 'true');
+    renderPicker();
+    $('hexInput').value = hsvToColor(picker.h, picker.s, picker.v).toUpperCase();
+    $('customPicker').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function closeCustomPicker() {
+    $('customPicker').hidden = true;
+    $('paletteHead').hidden = false;
+    $('palette').hidden = false;
+    $('themeHint').hidden = false;
+    $('customSwatch').setAttribute('aria-expanded', 'false');
+  }
+
+  function setActiveTarget(target) {
+    activeTarget = target;
+    renderTargets();
+    renderPaletteSelection();
+    if (!$('customPicker').hidden) {
+      setPickerFromColor(draft[target]);
+      renderPicker();
+    }
   }
 
   function openThemes() {
+    closeCustomPicker();
     draft = getColors();
+    activeTarget = 'primary';
     $('themePreview').innerHTML = miniHome();
     paintPreview();
     document.body.classList.add('theme-open');
@@ -126,14 +235,83 @@
   $('themeClose').onclick = () => document.body.classList.remove('theme-open');
   $('themeBackdrop').onclick = () => document.body.classList.remove('theme-open');
 
-  $('primaryColor').addEventListener('input', (e) => {
-    draft = { ...draft, primary: e.target.value };
+  document.querySelectorAll('.color-target').forEach((btn) => {
+    btn.addEventListener('click', () => setActiveTarget(btn.dataset.target));
+  });
+
+  $('palette').addEventListener('click', (e) => {
+    const swatch = e.target.closest('[data-color]');
+    if (!swatch) return;
+    draft = { ...draft, [activeTarget]: swatch.dataset.color };
     paintPreview();
   });
-  $('secondaryColor').addEventListener('input', (e) => {
-    draft = { ...draft, secondary: e.target.value };
-    paintPreview();
+
+  $('customSwatch').addEventListener('click', openCustomPicker);
+  $('pickerDone').addEventListener('click', closeCustomPicker);
+
+  function bindPickerDrag(el, onMove) {
+    let dragging = false;
+    el.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      el.setPointerCapture(e.pointerId);
+      onMove(e);
+    });
+    el.addEventListener('pointermove', (e) => {
+      if (dragging) onMove(e);
+    });
+    const stop = () => { dragging = false; };
+    el.addEventListener('pointerup', stop);
+    el.addEventListener('pointercancel', stop);
+  }
+
+  bindPickerDrag($('svArea'), (e) => {
+    const rect = $('svArea').getBoundingClientRect();
+    picker.s = clamp01((e.clientX - rect.left) / rect.width);
+    picker.v = 1 - clamp01((e.clientY - rect.top) / rect.height);
+    applyPicker();
   });
+
+  bindPickerDrag($('hueBar'), (e) => {
+    const rect = $('hueBar').getBoundingClientRect();
+    picker.h = clamp01((e.clientX - rect.left) / rect.width) * 359.999;
+    applyPicker();
+  });
+
+  $('svArea').addEventListener('keydown', (e) => {
+    const step = 0.02;
+    if (e.key === 'ArrowLeft') picker.s = clamp01(picker.s - step);
+    else if (e.key === 'ArrowRight') picker.s = clamp01(picker.s + step);
+    else if (e.key === 'ArrowUp') picker.v = clamp01(picker.v + step);
+    else if (e.key === 'ArrowDown') picker.v = clamp01(picker.v - step);
+    else return;
+    e.preventDefault();
+    applyPicker();
+  });
+
+  $('hueBar').addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') picker.h = (picker.h + 358) % 360;
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') picker.h = (picker.h + 2) % 360;
+    else return;
+    e.preventDefault();
+    applyPicker();
+  });
+
+  $('hexInput').addEventListener('input', (e) => {
+    const raw = e.target.value.trim();
+    if (!/^#?[0-9a-f]{6}$/i.test(raw)) return;
+    const hex = raw.startsWith('#') ? raw : `#${raw}`;
+    setPickerFromColor(hex);
+    draft = { ...draft, [activeTarget]: hex.toLowerCase() };
+    paintPreview();
+    renderPicker();
+  });
+  $('hexInput').addEventListener('blur', () => {
+    $('hexInput').value = hsvToColor(picker.h, picker.s, picker.v).toUpperCase();
+  });
+  $('hexInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+  });
+  $('hexInput').addEventListener('focus', (e) => e.target.select());
 
   $('applyTheme').onclick = () => {
     const saved = saveColors(draft);

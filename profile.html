@@ -101,19 +101,55 @@
           <div class="mini" id="themePreview"></div>
         </div>
       </div>
-      <div class="gradient-strip" id="gradientStrip"></div>
-      <div class="color-list">
-        <label class="color-row">
-          <input class="color-swatch" type="color" id="primaryColor" value="#3e6ae1" aria-label="Primary color">
-          <div class="color-txt"><div class="t">Primary</div><div class="s" id="primaryHex">#3E6AE1</div></div>
-        </label>
-        <label class="color-row">
-          <input class="color-swatch" type="color" id="secondaryColor" value="#8b5cf6" aria-label="Secondary color">
-          <div class="color-txt"><div class="t">Secondary</div><div class="s" id="secondaryHex">#8B5CF6</div></div>
-        </label>
+
+      <div class="color-targets" role="group" aria-label="Choose which gradient color to edit">
+        <button type="button" class="color-target active" data-target="primary" aria-pressed="true">
+          <span class="target-swatch" id="primaryDot"></span>
+          <span class="target-text">
+            <span class="target-label">Primary</span>
+            <span class="target-hex" id="primaryHex">#1F3A68</span>
+          </span>
+        </button>
+        <button type="button" class="color-target" data-target="secondary" aria-pressed="false">
+          <span class="target-swatch" id="secondaryDot"></span>
+          <span class="target-text">
+            <span class="target-label">Secondary</span>
+            <span class="target-hex" id="secondaryHex">#C6A664</span>
+          </span>
+        </button>
       </div>
-      <p class="theme-hint">Pick two colors — they blend into your garage gradient.</p>
-      <button class="btn theme-apply" id="applyTheme">Apply Gradient</button>
+
+      <div class="palette-head" id="paletteHead">
+        <span class="palette-title" id="paletteTitle">Primary palette</span>
+        <span class="palette-note" id="paletteNote">Sapphire</span>
+      </div>
+      <div class="palette" id="palette" role="group" aria-labelledby="paletteTitle">
+        <button type="button" class="swatch swatch-custom" id="customSwatch" title="Custom color" aria-label="Open custom color picker" aria-controls="customPicker" aria-expanded="false">
+          <span class="custom-ico" id="customIco"></span>
+        </button>
+      </div>
+      <p class="theme-hint" id="themeHint">Pick a suggested color, or open the custom picker.</p>
+      <section class="custom-picker" id="customPicker" hidden aria-labelledby="pickerTitle">
+        <div class="picker-head">
+          <span class="picker-title" id="pickerTitle">Custom primary</span>
+          <button type="button" class="picker-done" id="pickerDone">Done</button>
+        </div>
+        <div class="picker-sv" id="svArea" tabindex="0" aria-label="Saturation and brightness">
+          <div class="picker-sv-handle" id="svHandle"></div>
+        </div>
+        <div class="picker-hue" id="hueBar" tabindex="0" aria-label="Hue">
+          <div class="picker-hue-handle" id="hueHandle"></div>
+        </div>
+        <div class="picker-foot">
+          <span class="picker-preview" id="pickerPreview"></span>
+          <label class="picker-hex-label" for="hexInput">HEX</label>
+          <input class="picker-hex" id="hexInput" maxlength="7" autocomplete="off" spellcheck="false">
+        </div>
+      </section>
+    </div>
+    <div class="theme-foot">
+      <div class="gradient-strip" id="gradientStrip"></div>
+      <button class="btn" id="applyTheme">Apply Gradient</button>
     </div>
   </section>
 
