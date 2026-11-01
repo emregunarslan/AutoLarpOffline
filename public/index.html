@@ -19,7 +19,10 @@
   <main class="app">
     <header class="header">
       <h1 class="greeting" id="greeting">Hello</h1>
-      <a class="avatar-btn" id="avatar" href="profile.html" aria-label="Profile"></a>
+      <div class="header-actions">
+        <button class="fullscreen-btn" id="fullscreenBtn" type="button" aria-label="Full screen" hidden></button>
+        <a class="avatar-btn" id="avatar" href="profile.html" aria-label="Profile"></a>
+      </div>
     </header>
     <p class="garage-value" id="garageValue" hidden></p>
     <section class="car-list" id="list"></section>
@@ -29,6 +32,7 @@
   <script src="js/brands.js"></script>
   <script src="js/value.js"></script>    <script src="js/icons.js"></script>
     <script src="js/garage.js"></script>
+  <script src="js/fullscreen-button.js"></script>
   <script src="js/chat.js"></script>
 </body>
 </html>

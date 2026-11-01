@@ -934,3 +934,13 @@ body:has(.chat-fab) .app { padding-bottom: calc(var(--safe-bottom) + 100px); }
 .suggest:disabled { opacity: .6; }
 .garage-value { margin: -12px 2px 18px; font-size: 14px; font-weight: 500; color: var(--muted); letter-spacing: .2px; }
 .garage-value b { color: var(--text); font-weight: 700; margin-left: 4px; }
+
+/* Garage list header: fullscreen toggle next to the profile picture */
+.header-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+.fullscreen-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--line); color: #c7c7cc;
+  display: grid; place-items: center; flex: none;
+}
+.fullscreen-btn svg { width: 18px; height: 18px; }
+.fullscreen-btn:active { transform: scale(.92); }
