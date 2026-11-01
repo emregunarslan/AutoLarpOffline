@@ -5,53 +5,21 @@
   if (!car) { location.replace('./'); return; }
 
   document.title = car.title;
+  document.body.dataset.vehicleId = car.id;
   const type = powertrainOf(car);
   const { pct, km, fuel, oil, psi, updatedAt } = vehicleStats(car);
-  const rear = trunkName(car);
   const place = car.location || DEFAULT_LOCATION;
 
-  // [key, label, icon, onText, offText (null = one-shot), startsOn]
-  const ALL = {
-    lock: ['Lock', 'lock', 'Locked', 'Unlocked', true],
-    climate: ['Climate', 'fan', 'Climate on', 'Climate off'],
-    start: ['Remote Start', 'power', 'Engine started', 'Engine stopped'],
-    trunk: [rear, 'trunk', `${rear} opened`, `${rear} closed`],
-    charge: ['Charge Port', 'bolt', 'Charge port opened', 'Charge port closed'],
-    charging: ['Charging', 'plug', 'Charging started', 'Charging stopped'],
-    timer: ['Charge Timer', 'clock', 'Charge timer set', 'Charge timer off'],
-    precond: ['Precondition', 'thermo', 'Preconditioning on', 'Preconditioning off'],
-    defrost: ['Defrost', 'defrost', 'Defrost on', 'Defrost off'],
-    seat: ['Heated Seats', 'seat', 'Heated seats on', 'Heated seats off'],
-    seatcool: ['Cooled Seats', 'snow', 'Ventilated seats on', 'Ventilated seats off'],
-    wheel: ['Heated Wheel', 'wheel', 'Heated steering wheel on', 'Heated steering wheel off'],
-    windows: ['Windows', 'window', 'Windows opened', 'Windows closed'],
-    sunroof: ['Sunroof', 'sunroof', 'Sunroof opened', 'Sunroof closed'],
-    horn: ['Horn', 'horn', 'Horn sounded', null],
-    flash: ['Lights', 'lights', 'Lights flashed', null],
-    panic: ['Alarm', 'alarm', 'Alarm sounding', 'Alarm off'],
-    locate: ['Find Vehicle', 'location', 'Vehicle location updated', null],
-    garage: ['Garage Door', 'home', 'Garage door signal sent', null],
-    valet: ['Valet Mode', 'valet', 'Valet Mode on', 'Valet Mode off'],
-    ...SIGNATURE_FEATURES,
-  };
+  const ALL = controlDefs(car);
 
   const theme = brandTheme(car.brand);
   const brandName = brandBySlug(car.brand).name;
   document.body.style.setProperty('--accent', theme.accent);
 
-  // Buttons that move something physical; they lock out briefly after each press.
+  // Buttons that move something physical lock out briefly after each press.
   const COOLDOWN_MS = 4000;
-  const COOLDOWN = new Set(['lock', 'start', 'trunk', 'charge', 'windows', 'sunroof', ...SIGNATURE_COOLDOWN]);
-
-  // Features shared by most luxury-brand apps, plus powertrain-specific ones.
-  // Brand signature features lead; trucks swap the sunroof for bed lights.
-  const COMMON = ['defrost', 'seat', 'seatcool', 'wheel', 'windows',
-                  bodyTypeOf(car) === 'truck' ? 'bedlights' : 'sunroof',
-                  'horn', 'flash', 'panic', 'locate', 'garage', 'valet'];
-  const LAYOUT = {
-    electric: { quick: ['lock', 'climate', 'charge', 'trunk'], grid: [...theme.features, 'charging', 'timer', 'precond', ...COMMON] },
-    gas: { quick: ['lock', 'start', 'climate', 'trunk'], grid: [...theme.features, ...COMMON] },
-  }[type];
+  const COOLDOWN = new Set(COOLDOWN_CONTROLS);
+  const LAYOUT = controlLayout(car);
 
   // Everything the car reports lives in one status card.
   const battery = (p) => `<span class="battery"><i style="width:${p}%"></i></span>`;
@@ -76,7 +44,7 @@
 
     <div class="quick-row">
       ${LAYOUT.quick.map((k) =>
-        `<button class="quick-btn${ALL[k][4] ? ' on' : ''}" data-k="${k}" aria-label="${ALL[k][0]}">${ICONS[ALL[k][1]]}</button>`).join('')}
+        `<button class="quick-btn" data-k="${k}" aria-label="${ALL[k][0]}">${ICONS[ALL[k][1]]}</button>`).join('')}
     </div>
 
     <section class="status-card">
@@ -140,9 +108,38 @@
   }
 
   const statusEl = document.getElementById('status');
-  const state = { lock: true, start: false };
+  const state = { lock: true, start: false, ...controlState(car.id) };
   function renderStatus() {
     statusEl.textContent = `${state.start ? 'Engine running' : 'Parked'} · ${state.lock ? 'Locked' : 'Unlocked'}`;
+  }
+
+  // Shows a control as on or off, plus anything that depends on it.
+  function show(btn, k, on) {
+    btn.classList.toggle('on', on);
+    if (k === 'lock') btn.innerHTML = on ? ICONS.lock : ICONS.unlock;
+    if (k === 'climate') document.getElementById('climateLabel').textContent = `Interior · Climate ${on ? 'On' : 'Off'}`;
+  }
+
+  // Runs a control: one-shot actions flash; others switch on/off and are remembered.
+  function runControl(btn, k, on) {
+    const [, , onText, offText] = ALL[k];
+    if (COOLDOWN.has(k)) startCooldown(btn);
+    if (offText === null) {
+      btn.classList.add('on');
+      setTimeout(() => btn.classList.remove('on'), 500);
+      toast(onText);
+      return;
+    }
+    show(btn, k, on);
+    toast(on ? onText : offText);
+    state[k] = on;
+    saveControlState(car.id, k, on);
+    if (k === 'lock' || k === 'start') renderStatus();
+  }
+
+  // Restore what was switched on earlier this session.
+  for (const btn of app.querySelectorAll('[data-k]')) {
+    if (btn.dataset.k in state) show(btn, btn.dataset.k, state[btn.dataset.k]);
   }
   renderStatus();
 
@@ -150,25 +147,16 @@
     const btn = e.target.closest('[data-k]');
     if (!btn) return;
     const k = btn.dataset.k;
-    const [label, , onText, offText] = ALL[k];
-    if (btn.classList.contains('cooling')) { toast(busyText(k, label, btn.classList.contains('on'))); return; }
+    if (btn.classList.contains('cooling')) { toast(busyText(k, ALL[k][0], btn.classList.contains('on'))); return; }
     if (navigator.vibrate) navigator.vibrate(10);
-    if (COOLDOWN.has(k)) startCooldown(btn);
+    runControl(btn, k, !btn.classList.contains('on'));
+  });
 
-    // One-shot actions flash briefly instead of staying on.
-    if (offText === null) {
-      btn.classList.add('on');
-      setTimeout(() => btn.classList.remove('on'), 500);
-      toast(onText);
-      return;
-    }
-    const on = btn.classList.toggle('on');
-    toast(on ? onText : offText);
-    state[k] = on;
-
-    if (k === 'lock') btn.innerHTML = on ? ICONS.lock : ICONS.unlock;
-    if (k === 'lock' || k === 'start') renderStatus();
-    if (k === 'climate') document.getElementById('climateLabel').textContent = `Interior · Climate ${on ? 'On' : 'Off'}`;
+  // Commands from the assistant for this car play out on the buttons.
+  window.addEventListener('car-command', (e) => {
+    const { vehicleId, control, on } = e.detail;
+    const btn = vehicleId === car.id && app.querySelector(`[data-k="${control}"]`);
+    if (btn) runControl(btn, control, on);
   });
 
   let temp = 21;

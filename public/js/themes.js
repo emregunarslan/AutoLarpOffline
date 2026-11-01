@@ -1,7 +1,31 @@
-// Brand-specific control menus: each brand gets its own accent colour and a
-// few signature features on top of the shared controls.
+// Vehicle controls and brand-specific menus. Loaded by the car page and the AI
+// assistant in the browser, and imported by the server so both agree on which
+// controls each vehicle has.
 
-// [label, icon, onText, offText (null = one-shot)]
+// [label, icon, onText, offText (null = one-shot), startsOn]
+const BASE_CONTROLS = {
+  lock: ['Lock', 'lock', 'Locked', 'Unlocked', true],
+  climate: ['Climate', 'fan', 'Climate on', 'Climate off'],
+  start: ['Remote Start', 'power', 'Engine started', 'Engine stopped'],
+  trunk: ['Trunk', 'trunk', 'Trunk opened', 'Trunk closed'],
+  charge: ['Charge Port', 'bolt', 'Charge port opened', 'Charge port closed'],
+  charging: ['Charging', 'plug', 'Charging started', 'Charging stopped'],
+  timer: ['Charge Timer', 'clock', 'Charge timer set', 'Charge timer off'],
+  precond: ['Precondition', 'thermo', 'Preconditioning on', 'Preconditioning off'],
+  defrost: ['Defrost', 'defrost', 'Defrost on', 'Defrost off'],
+  seat: ['Heated Seats', 'seat', 'Heated seats on', 'Heated seats off'],
+  seatcool: ['Cooled Seats', 'snow', 'Ventilated seats on', 'Ventilated seats off'],
+  wheel: ['Heated Wheel', 'wheel', 'Heated steering wheel on', 'Heated steering wheel off'],
+  windows: ['Windows', 'window', 'Windows opened', 'Windows closed'],
+  sunroof: ['Sunroof', 'sunroof', 'Sunroof opened', 'Sunroof closed'],
+  horn: ['Horn', 'horn', 'Horn sounded', null],
+  flash: ['Lights', 'lights', 'Lights flashed', null],
+  panic: ['Alarm', 'alarm', 'Alarm sounding', 'Alarm off'],
+  locate: ['Find Vehicle', 'location', 'Vehicle location updated', null],
+  garage: ['Garage Door', 'home', 'Garage door signal sent', null],
+  valet: ['Valet Mode', 'valet', 'Valet Mode on', 'Valet Mode off'],
+};
+
 const SIGNATURE_FEATURES = {
   sport: ['Sport Mode', 'gauge', 'Sport mode ready', 'Comfort mode'],
   exhaust: ['Sport Exhaust', 'exhaust', 'Sport exhaust open', 'Sport exhaust quiet'],
@@ -26,8 +50,9 @@ const SIGNATURE_FEATURES = {
   bedlights: ['Bed Lights', 'lights', 'Bed lights on', 'Bed lights off'],
 };
 
-// Features that physically move something get the press cooldown.
-const SIGNATURE_COOLDOWN = ['frontlift', 'wing', 'suspension', 'doors', 'umbrella'];
+// Controls that physically move something get the press cooldown.
+const COOLDOWN_CONTROLS = ['lock', 'start', 'trunk', 'charge', 'windows', 'sunroof',
+  'frontlift', 'wing', 'suspension', 'doors', 'umbrella'];
 
 const BRAND_THEMES = {
   tesla: { accent: '#3e6ae1', features: ['camp', 'purifier', 'guard'] },
@@ -69,3 +94,34 @@ const BRAND_THEMES = {
 function brandTheme(slug) {
   return BRAND_THEMES[slug] || { accent: '#3e6ae1', features: ['ambient', 'camera', 'guard'] };
 }
+
+// What the rear opening is called for each body type.
+function rearName(car) {
+  return { suv: 'Liftgate', truck: 'Tailgate' }[car.bodyType] || 'Trunk';
+}
+
+// Every control definition for this car (the rear opening is named by body type).
+function controlDefs(car) {
+  const rear = rearName(car);
+  return {
+    ...BASE_CONTROLS,
+    trunk: [rear, 'trunk', `${rear} opened`, `${rear} closed`],
+    ...SIGNATURE_FEATURES,
+  };
+}
+
+// Which controls this car shows: four quick buttons plus the grid.
+// Brand signature features lead; trucks swap the sunroof for bed lights.
+function controlLayout(car) {
+  const electric = !['gas', 'hybrid'].includes(car.powertrain);
+  const common = ['defrost', 'seat', 'seatcool', 'wheel', 'windows',
+    car.bodyType === 'truck' ? 'bedlights' : 'sunroof',
+    'horn', 'flash', 'panic', 'locate', 'garage', 'valet'];
+  const features = brandTheme(car.brand).features;
+  return electric
+    ? { quick: ['lock', 'climate', 'charge', 'trunk'], grid: [...features, 'charging', 'timer', 'precond', ...common] }
+    : { quick: ['lock', 'start', 'climate', 'trunk'], grid: [...features, ...common] };
+}
+
+// Lets the server import this file and use the same definitions.
+globalThis.CarControls = { controlDefs, controlLayout, brandTheme, COOLDOWN_CONTROLS };

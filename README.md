@@ -19,3 +19,14 @@ Live site: https://autolarp.onrender.com/
 3. Open http://localhost:8080 (in Codespaces: the **Ports** tab → port 8080).
 
 Accounts, vehicles and photos are stored in MongoDB (database `autolarp`).
+
+## AI assistant (optional)
+
+The ✦ button on the garage and car pages opens a chat that can run vehicle controls
+("lock all my cars", "turn on the climate") and recommend which car to take
+("which car fits the most suitcases?"). It uses Google Gemini (`gemini-flash-latest` by default;
+set `GEMINI_MODEL` to change it).
+
+Add a Gemini API key (aistudio.google.com/apikey) as `GEMINI_API_KEY` in `.env`
+(`npm start` offers to save it the first time) or in Render's Environment settings.
+Without a key the site works normally and the chat says the assistant isn't set up.

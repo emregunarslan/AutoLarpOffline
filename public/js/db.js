@@ -62,9 +62,13 @@ function bodyTypeOf(car) {
   return BODY_TYPES[car.bodyType] ? car.bodyType : 'sedan';
 }
 
-// What the rear opening is called for each body type.
-function trunkName(car) {
-  return { suv: 'Liftgate', truck: 'Tailgate' }[bodyTypeOf(car)] || 'Trunk';
+// On/off state of each control (lock, climate, …) for this session, so changes —
+// including ones made by the assistant — carry over between pages.
+function controlState(carId) {
+  return JSON.parse(sessionStorage.getItem(`ctl:${carId}`) || '{}');
+}
+function saveControlState(carId, control, on) {
+  sessionStorage.setItem(`ctl:${carId}`, JSON.stringify({ ...controlState(carId), [control]: on }));
 }
 
 const rand = (min, max) => Math.round(min + Math.random() * (max - min));

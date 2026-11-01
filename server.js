@@ -7,6 +7,7 @@ import path from 'node:path';
 import readline from 'node:readline/promises';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import { assistantRoutes } from './assistant.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const ENV_FILE = path.join(ROOT, '.env');
@@ -36,7 +37,20 @@ async function mongoUri() {
   return uri;
 }
 
+// Gemini API key for the AI assistant: asked for once (Enter skips and turns the assistant off).
+async function askForGeminiKey() {
+  if ('GEMINI_API_KEY' in process.env || !process.stdin.isTTY) return;
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  console.log('\nOptional: paste a Gemini API key to turn on the AI assistant (from aistudio.google.com/apikey).');
+  const key = (await rl.question('Gemini API key (Enter to skip): ')).trim();
+  rl.close();
+  fs.appendFileSync(ENV_FILE, `GEMINI_API_KEY=${key}\n`, { mode: 0o600 });
+  process.env.GEMINI_API_KEY = key;
+  console.log(key ? 'Saved to .env.\n' : 'Skipped — add GEMINI_API_KEY to .env later to turn the assistant on.\n');
+}
+
 const client = new MongoClient(await mongoUri());
+await askForGeminiKey();
 await client.connect();
 const db = client.db(process.env.MONGODB_DB || 'autolarp');
 const users = db.collection('users');
@@ -248,6 +262,8 @@ app.delete('/api/data', requireUser, route(async (req, res) => {
   await users.updateOne({ _id: req.user._id }, { $set: { name: req.user.username, avatar: null } });
   res.json({ ok: true });
 }));
+
+assistantRoutes(app, { requireUser, cars });
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 app.use(express.static(path.join(ROOT, 'public'), { extensions: ['html'] }));
