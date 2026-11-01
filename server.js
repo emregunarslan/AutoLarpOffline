@@ -131,7 +131,7 @@ function validateCar(body) {
     coords: validCoords(body.coords),
     brand: str(body.brand, 30),
     powertrain: body.powertrain === 'gas' ? 'gas' : 'electric',
-    bodyType: ['sedan', 'suv', 'truck'].includes(body.bodyType) ? body.bodyType : null,
+    bodyType: ['sedan', 'coupe', 'suv', 'truck'].includes(body.bodyType) ? body.bodyType : null,
     photo: typeof body.photo === 'string' ? body.photo : '',
   };
   if (!BRANDS.has(car.brand)) return 'Choose your car brand';
@@ -248,6 +248,20 @@ app.post('/api/cars', requireUser, route(async (req, res) => {
   const doc = { ...car, id: crypto.randomUUID(), userId: req.user._id, createdAt: Date.now() };
   await cars.insertOne(doc);
   res.json(publicCar(doc));
+}));
+
+// Find Vehicle: updates just the car's location (address + GPS) without resending the photo.
+app.patch('/api/cars/:id/location', requireUser, route(async (req, res) => {
+  const location = typeof req.body.location === 'string' ? req.body.location.trim().slice(0, 80) : '';
+  const coords = validCoords(req.body.coords);
+  if (!location || !coords) return res.status(400).json({ error: 'Send a location and coordinates' });
+  const updated = await cars.findOneAndUpdate(
+    { userId: req.user._id, id: req.params.id },
+    { $set: { location, coords } },
+    { returnDocument: 'after', projection: { photo: 0 } },
+  );
+  if (!updated) return res.status(404).json({ error: 'Vehicle not found' });
+  res.json(publicCar(updated));
 }));
 
 app.put('/api/cars/:id', requireUser, route(async (req, res) => {

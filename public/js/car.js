@@ -50,7 +50,7 @@
     </div>
 
     <section class="status-card">
-      <div class="status-head"><span>Vehicle Status</span><span>Last updated ${timeAgo(updatedAt)}</span></div>
+      <div class="status-head"><span>Vehicle Status</span><span id="updatedAgo">Last updated ${timeAgo(updatedAt)}</span></div>
       <div class="status-main">
         <div class="status-ico">${headline.icon}</div>
         <div><div class="l">${headline.label}</div><div class="v">${headline.value}</div></div>
@@ -58,7 +58,7 @@
       <div class="status-rows">
         ${ROWS.map(([l, v]) => row(l, v)).join('')}
         ${row('Status', '', 'status')}
-        ${row('Location', escapeHtml(place))}
+        ${row('Location', escapeHtml(place), 'locationValue')}
       </div>
       <div class="tires-title">Tire Pressure</div>
       <div class="tires-grid">
@@ -88,11 +88,11 @@
 
   const toastEl = document.getElementById('toast');
   let toastTimer;
-  function toast(msg) {
+  function toast(msg, ms = 1600) {
     toastEl.textContent = msg;
     toastEl.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1600);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
   }
 
   // Fills the button with colour that fades out; presses are ignored until it's gone.
@@ -100,6 +100,37 @@
     btn.style.setProperty('--cooldown', `${COOLDOWN_MS}ms`);
     btn.classList.add('cooling');
     setTimeout(() => btn.classList.remove('cooling'), COOLDOWN_MS);
+  }
+
+  // Find Vehicle: uses the phone's current position as the car's location —
+  // looks up the street address, saves it, and updates the status card.
+  function findVehicle(btn) {
+    if (!navigator.geolocation) return toast('Location isn\'t available in this browser.', 3000);
+    if (btn.classList.contains('on')) return; // already looking
+    btn.classList.add('on');
+    toast('Locating vehicle…', 15000);
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      const lat = coords.latitude, lon = coords.longitude;
+      let address = `${lat.toFixed(5)}, ${lon.toFixed(5)}`; // shown if the address lookup fails
+      try {
+        address = (await DB.api('GET', `/geocode?lat=${lat}&lon=${lon}`)).address || address;
+      } catch { /* keep the coordinates */ }
+      try {
+        await DB.api('PATCH', `/cars/${encodeURIComponent(car.id)}/location`, { location: address, coords: { lat, lon } });
+        car.location = address;
+        document.getElementById('locationValue').textContent = address;
+        document.getElementById('updatedAgo').textContent = 'Last updated just now';
+        toast(`Vehicle located: ${address}`, 3500);
+      } catch (err) {
+        toast(err.message || 'Couldn\'t save the new location.', 3000);
+      }
+      btn.classList.remove('on');
+    }, (err) => {
+      btn.classList.remove('on');
+      toast(err.code === err.PERMISSION_DENIED
+        ? 'Location access is blocked. Allow it in your browser\'s site settings.'
+        : 'Couldn\'t get your location. Try again.', 3500);
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
   }
 
   // What to say if a button is pressed again during its cooldown.
@@ -126,6 +157,7 @@
   function runControl(btn, k, on) {
     const [, , onText, offText] = ALL[k];
     if (COOLDOWN.has(k)) startCooldown(btn);
+    if (k === 'locate') return findVehicle(btn);
     if (offText === null) {
       btn.classList.add('on');
       setTimeout(() => btn.classList.remove('on'), 500);
