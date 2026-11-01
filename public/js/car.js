@@ -30,7 +30,7 @@
     : { icon: `<span class="gauge-ico">${ICONS.fuel}</span>`, label: 'Estimated fuel', value: `${fuel}%` };
   const ROWS = [
     ...(type === 'electric' ? [['Battery', `${pct}%`], ['Charge target', '80%']] : [['Oil life', `${oil}%`]]),
-    ['Estimated value', formatCAD(carValue(car))],
+    ['Estimated value', formatCADRange(carValueRange(car))],
   ];
   const row = (label, value, id = '') => `<div class="srow"><span>${label}</span><b${id ? ` id="${id}"` : ''}>${value}</b></div>`;
 

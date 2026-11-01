@@ -3,16 +3,17 @@
 // always shows the same value. Loaded by the pages and imported by the server.
 
 // [low, high] in CAD.
+// Deliberately generous: it's the owner's dream garage.
 const PRICE_BANDS = {
-  hypercar: [2500000, 5000000],
-  supercar: [300000, 650000],
-  rollsroyce: [450000, 700000],
-  bentley: [250000, 450000],
-  astonmartin: [200000, 400000],
-  performance: [110000, 250000],
-  luxury: [55000, 140000],
-  mainstream: [32000, 75000],
-  budget: [22000, 45000],
+  hypercar: [4000000, 8500000],
+  supercar: [480000, 1100000],
+  rollsroyce: [700000, 1200000],
+  bentley: [420000, 750000],
+  astonmartin: [340000, 650000],
+  performance: [190000, 420000],
+  luxury: [95000, 240000],
+  mainstream: [55000, 120000],
+  budget: [36000, 70000],
 };
 
 const BRAND_TIER = {
@@ -36,7 +37,11 @@ const BODY_NUDGE = { coupe: 0.25, truck: 0.15, suv: 0.1, sedan: 0 };
 function hash01(text) {
   let h = 2166136261;
   for (const ch of String(text)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
-  return h / 4294967296;
+  // Final mix so ids that differ by one character still land far apart.
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b) >>> 0;
+  h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35) >>> 0;
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296; // >>> 0: XOR returns a signed number
 }
 
 function roundNicely(n) {
@@ -46,7 +51,10 @@ function roundNicely(n) {
 
 function carValue(car) {
   const [low, high] = PRICE_BANDS[BRAND_TIER[car.brand] || 'mainstream'];
-  const position = Math.min(1, hash01(car.id || car.title || '') * 0.75 + (BODY_NUDGE[car.bodyType] || 0));
+  // Cars sit in the upper 70% of their band; body type raises the floor within
+  // that (coupes start higher) without pushing every car to the very top.
+  const nudge = BODY_NUDGE[car.bodyType] || 0;
+  const position = 0.3 + 0.7 * (nudge + (1 - nudge) * hash01(car.id || car.title || ''));
   const electric = !['gas', 'hybrid'].includes(car.powertrain);
   return roundNicely((low + (high - low) * position) * (electric ? 1.05 : 1));
 }
@@ -59,5 +67,18 @@ function formatCAD(n, { compact = false } = {}) {
   }).format(n);
 }
 
+// Values are shown as an estimate range around the car's value (about ±8%),
+// e.g. a CA$420,000 car shows "CA$386,000 – CA$454,000".
+const RANGE = 0.08;
+function valueRange(value) {
+  return [roundNicely(value * (1 - RANGE)), roundNicely(value * (1 + RANGE))];
+}
+function carValueRange(car) {
+  return valueRange(carValue(car));
+}
+function formatCADRange([low, high], options) {
+  return `${formatCAD(low, options)} – ${formatCAD(high, options)}`;
+}
+
 // Lets the server import this file and use the same numbers.
-globalThis.CarValue = { carValue, formatCAD, PRICE_BANDS, BRAND_TIER };
+globalThis.CarValue = { carValue, carValueRange, valueRange, formatCAD, formatCADRange, PRICE_BANDS, BRAND_TIER };

@@ -85,7 +85,7 @@
         <span class="thumb" style="background-image:url('${c.photo}')"></span>
         <div class="txt">
           <div class="t">${logoHtml(c.brand)}<span>${escapeHtml(c.title)}</span></div>
-          <div class="s">${POWERTRAINS[powertrainOf(c)]} · ${BODY_TYPES[bodyTypeOf(c)]} · ${formatCAD(carValue(c), { compact: true })} · ${escapeHtml(c.description || brandBySlug(c.brand).name)}</div>
+          <div class="s">${POWERTRAINS[powertrainOf(c)]} · ${BODY_TYPES[bodyTypeOf(c)]} · ${formatCADRange(carValueRange(c), { compact: true })} · ${escapeHtml(c.description || brandBySlug(c.brand).name)}</div>
         </div>
         <span class="chev">${ICONS.chev}</span>
       </button>`).join('') + `

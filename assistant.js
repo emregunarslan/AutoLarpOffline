@@ -9,7 +9,7 @@ import './public/js/value.js';
 
 const { controlDefs, controlLayout, brandTheme } = globalThis.CarControls;
 const { brandBySlug } = globalThis.CarBrands;
-const { carValue, formatCAD } = globalThis.CarValue;
+const { carValueRange, formatCADRange } = globalThis.CarValue;
 
 // 'gemini-flash-latest' always points at Google's current Flash model; override with GEMINI_MODEL.
 const MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
@@ -70,7 +70,7 @@ function describeGarage(cars, stats, currentId) {
       `  brand: ${brandBySlug(car.brand).name}`,
       car.description && `  description: ${JSON.stringify(car.description)}`,
       `  body type: ${car.bodyType || 'sedan'}`,
-      `  estimated value: ${formatCAD(carValue(car))}`,
+      `  estimated value: ${formatCADRange(carValueRange(car))}`,
       `  powertrain: ${electric ? 'electric' : 'gas'}`,
       energy.filter(Boolean).length && `  status: ${energy.filter(Boolean).join(', ')}`,
       `  parked at: ${JSON.stringify(car.location || '')}`,

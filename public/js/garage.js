@@ -14,7 +14,7 @@
 
   const garageValue = document.getElementById('garageValue');
   const total = cars.reduce((sum, car) => sum + carValue(car), 0);
-  garageValue.innerHTML = `Garage value <b>${formatCAD(total, { compact: true })}</b>`;
+  garageValue.innerHTML = `Garage value <b>${formatCADRange(valueRange(total), { compact: true })}</b>`;
   garageValue.hidden = false;
 
   list.innerHTML = cars.map((car, i) => {
