@@ -43,27 +43,27 @@
         <input type="file" accept="image/*" id="photo">
       </label>
 
-      <div class="field-label">Brand</div>
+      <div class="field-label">Brand<span class="req">*</span></div>
       <div class="brand-grid" id="brands"></div>
 
       <div class="field-label">Powertrain</div>
       <div class="segmented" id="powertrain">
         <button type="button" data-v="electric">Electric</button>
         <button type="button" data-v="gas">Gas</button>
-        <button type="button" data-v="hybrid">Hybrid</button>
       </div>
 
-      <div class="field-label">Name</div>
-      <input class="input" id="title" maxlength="40" placeholder="e.g. Midnight">
+      <div class="field-label">Name<span class="req">*</span></div>
+      <input class="input" id="title" maxlength="40" placeholder="e.g. Black Edition">
 
       <div class="field-label">Description</div>
-      <textarea class="input" id="desc" maxlength="140" placeholder="e.g. Model S Plaid · Ultra Red"></textarea>
+      <textarea class="input" id="desc" maxlength="140" placeholder="e.g. S-Class S 580 · Obsidian Black"></textarea>
 
       <div class="field-label">Location</div>
-      <input class="input" id="location" maxlength="60" placeholder="e.g. 15 Greyhawk St">
+      <input class="input" id="location" maxlength="60" placeholder="10 King's College Rd">
 
 
-      <button class="btn" type="submit" id="save" disabled>Save</button>
+      <div class="form-error" id="formError"></div>
+      <button class="btn" type="submit" id="save">Save</button>
       <button class="btn ghost-danger" type="button" id="remove" hidden>Remove Vehicle</button>
     </form>
   </section>

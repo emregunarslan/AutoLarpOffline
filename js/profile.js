@@ -92,8 +92,18 @@
     $('drop').classList.toggle('has', !!dataUrl);
   }
 
+  // Returns [message, element] for the first missing required field, or null.
+  function missingField() {
+    if (!state.brand) return ['Choose your car brand', $('brands')];
+    if (!state.photo) return ['Add a photo of your vehicle', $('drop')];
+    if (!$('title').value.trim()) return ['Give your vehicle a name', $('title')];
+    return null;
+  }
+
+  // Clears error highlights as the user fills fields in.
   function validate() {
-    $('save').disabled = !(state.photo && state.brand && $('title').value.trim());
+    [$('brands'), $('drop'), $('title')].forEach((el) => el.classList.remove('missing'));
+    $('formError').textContent = '';
   }
 
   function openSheet(car) {
@@ -102,7 +112,7 @@
     setPhoto(car ? car.photo : null);
     $('title').value = car ? car.title : '';
     $('desc').value = car ? car.description || '' : '';
-    $('location').value = car ? car.location || '' : '';
+    $('location').value = car ? car.location || DEFAULT_LOCATION : DEFAULT_LOCATION;
     state.powertrain = car ? powertrainOf(car) : 'electric';
     syncPowertrain();
     $('photo').value = '';
@@ -136,7 +146,14 @@
 
   $('form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if ($('save').disabled) return;
+    const missing = missingField();
+    if (missing) {
+      const [msg, el] = missing;
+      $('formError').textContent = msg;
+      el.classList.add('missing');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     const existing = cars.find((c) => c.id === state.id);
     await DB.saveCar({
       ...(existing || {}),

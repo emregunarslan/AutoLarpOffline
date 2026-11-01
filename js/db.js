@@ -53,27 +53,32 @@ const DB = (() => {
   };
 })();
 
-const POWERTRAINS = { electric: 'Electric', gas: 'Gas', hybrid: 'Hybrid' };
+// Used when a car has no location set (UofT Sandford Fleming Building).
+const DEFAULT_LOCATION = "10 King's College Rd";
 
-// Cars saved before powertrains existed were all shown as electric.
+const POWERTRAINS = { electric: 'Electric', gas: 'Gas' };
+
+// Cars saved before powertrains existed were all shown as electric;
+// hybrids (no longer offered) have an engine, so they become gas.
 function powertrainOf(car) {
+  if (car.powertrain === 'hybrid') return 'gas';
   return POWERTRAINS[car.powertrain] ? car.powertrain : 'electric';
 }
 
 // Deterministic gauges per car so the numbers look real but stay stable.
-// pct = battery %, fuel = fuel tank %, km = total range.
+// pct = battery %, fuel = fuel tank %, km = electric-only range (null for gas),
+// psi = tire pressures [FL, FR, RL, RR].
 function fakeRange(car) {
   let h = 0;
   for (const c of car.id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const type = powertrainOf(car);
   const pct = 55 + (h % 41);          // 55–95%
   const fuel = 40 + ((h >>> 7) % 56); // 40–95%
   const oil = 60 + ((h >>> 13) % 38); // 60–97%
-  const km = {
-    electric: Math.round(pct * 5.1),
-    gas: Math.round(fuel * 6.8),
-    hybrid: Math.round(fuel * 6.8 + pct * 0.7),
-  }[powertrainOf(car)];
-  return { pct, fuel, oil, km };
+  const km = { electric: Math.round(pct * 5.1), gas: null }[type];
+  const basePsi = { electric: 42, gas: 35 }[type];
+  const psi = [0, 1, 2, 3].map((i) => basePsi + ((h >>> (17 + i * 2)) % 3) - 1);
+  return { pct, fuel, oil, km, psi };
 }
 
 function escapeHtml(s) {

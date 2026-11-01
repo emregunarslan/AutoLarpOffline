@@ -6,67 +6,55 @@
 
   document.title = car.title;
   const type = powertrainOf(car);
-  const { pct, fuel, oil, km } = fakeRange(car);
-  const place = car.location || 'Home';
+  const { pct, fuel, oil, km, psi } = fakeRange(car);
+  const place = car.location || DEFAULT_LOCATION;
 
   // [key, label, icon, onText, offText (null = one-shot), startsOn]
   const ALL = {
     lock: ['Lock', 'lock', 'Locked', 'Unlocked', true],
     climate: ['Climate', 'fan', 'Climate on', 'Climate off'],
-    charge: ['Charge Port', 'bolt', 'Charge port opened', 'Charge port closed'],
-    frunk: ['Frunk', 'frunk', 'Frunk opened', 'Frunk closed'],
     start: ['Remote Start', 'power', 'Engine started', 'Engine stopped'],
     trunk: ['Trunk', 'trunk', 'Trunk opened', 'Trunk closed'],
+    charge: ['Charge Port', 'bolt', 'Charge port opened', 'Charge port closed'],
+    charging: ['Charging', 'plug', 'Charging started', 'Charging stopped'],
+    timer: ['Charge Timer', 'clock', 'Charge timer set', 'Charge timer off'],
+    precond: ['Precondition', 'thermo', 'Preconditioning on', 'Preconditioning off'],
     defrost: ['Defrost', 'defrost', 'Defrost on', 'Defrost off'],
-    seat: ['Seat Heat', 'seat', 'Seat heaters on', 'Seat heaters off'],
-    wheel: ['Wheel Heat', 'wheel', 'Steering wheel heater on', 'Steering wheel heater off'],
-    vent: ['Vent Windows', 'window', 'Windows vented', 'Windows closed'],
-    horn: ['Honk Horn', 'horn', 'Honked horn', null],
-    flash: ['Flash Lights', 'lights', 'Flashed lights', null],
-    homelink: ['HomeLink', 'home', 'HomeLink triggered', null],
-    valet: ['Valet', 'valet', 'Valet Mode on', 'Valet Mode off'],
-    mirrors: ['Fold Mirrors', 'mirror', 'Mirrors folded', 'Mirrors unfolded'],
-    sentry: ['Sentry', 'eye', 'Sentry Mode on', 'Sentry Mode off'],
-    summon: ['Summon', 'summon', 'Summon ready', 'Summon cancelled'],
-    keep: ['Keep Climate', 'snow', 'Keep Climate on', 'Keep Climate off'],
-    dog: ['Dog Mode', 'dog', 'Dog Mode on', 'Dog Mode off'],
-    precond: ['Precondition', 'thermo', 'Battery preconditioning', 'Preconditioning off'],
-    fueldoor: ['Fuel Door', 'fuel', 'Fuel door unlocked', 'Fuel door locked'],
-    panic: ['Panic Alarm', 'alarm', 'Panic alarm sounding', 'Panic alarm off'],
+    seat: ['Heated Seats', 'seat', 'Heated seats on', 'Heated seats off'],
+    seatcool: ['Cooled Seats', 'snow', 'Ventilated seats on', 'Ventilated seats off'],
+    wheel: ['Heated Wheel', 'wheel', 'Heated steering wheel on', 'Heated steering wheel off'],
+    windows: ['Windows', 'window', 'Windows opened', 'Windows closed'],
     sunroof: ['Sunroof', 'sunroof', 'Sunroof opened', 'Sunroof closed'],
-    evmode: ['EV Mode', 'leaf', 'EV Mode on', 'EV Mode off'],
+    horn: ['Horn', 'horn', 'Horn sounded', null],
+    flash: ['Lights', 'lights', 'Lights flashed', null],
+    panic: ['Alarm', 'alarm', 'Alarm sounding', 'Alarm off'],
+    locate: ['Find Vehicle', 'location', 'Vehicle location updated', null],
+    garage: ['Garage Door', 'home', 'Garage door signal sent', null],
+    valet: ['Valet Mode', 'valet', 'Valet Mode on', 'Valet Mode off'],
   };
 
+  // Features shared by most luxury-brand apps, plus powertrain-specific ones.
+  const COMMON = ['defrost', 'seat', 'seatcool', 'wheel', 'windows', 'sunroof',
+                  'horn', 'flash', 'panic', 'locate', 'garage', 'valet'];
   const LAYOUT = {
-    electric: {
-      quick: ['lock', 'climate', 'charge', 'frunk'],
-      grid: ['defrost', 'seat', 'wheel', 'vent', 'trunk', 'precond', 'sentry', 'summon', 'keep',
-             'dog', 'horn', 'flash', 'homelink', 'valet', 'mirrors'],
-    },
-    gas: {
-      quick: ['lock', 'start', 'climate', 'trunk'],
-      grid: ['defrost', 'seat', 'wheel', 'vent', 'sunroof', 'fueldoor', 'horn', 'flash', 'panic',
-             'homelink', 'valet', 'mirrors'],
-    },
-    hybrid: {
-      quick: ['lock', 'start', 'climate', 'charge'],
-      grid: ['evmode', 'precond', 'fueldoor', 'defrost', 'seat', 'wheel', 'vent', 'trunk', 'sunroof',
-             'horn', 'flash', 'panic', 'homelink', 'valet', 'mirrors'],
-    },
+    electric: { quick: ['lock', 'climate', 'charge', 'trunk'], grid: ['charging', 'timer', 'precond', ...COMMON] },
+    gas: { quick: ['lock', 'start', 'climate', 'trunk'], grid: COMMON },
   }[type];
 
   const VITALS = {
-    electric: [['Battery', `${pct}%`], ['Charge Limit', '80%'], ['Tires', 'OK']],
-    gas: [['Fuel', `${fuel}%`], ['Oil Life', `${oil}%`], ['Tires', 'OK']],
-    hybrid: [['Battery', `${pct}%`], ['Fuel', `${fuel}%`], ['Tires', 'OK']],
+    electric: [['Battery', `${pct}%`], ['Charge Target', '80%']],
+    gas: [['Fuel', `${fuel}%`], ['Oil Life', `${oil}%`]],
   }[type];
 
+  // Only the electric side gets a range estimate; fuel is shown as a percentage.
   const battery = (p) => `<span class="battery"><i style="width:${p}%"></i></span>`;
+  const fuelGauge = `<span class="gauge-ico">${ICONS.fuel}</span>${fuel}%`;
   const gauge = {
     electric: `${battery(pct)}${km} km`,
-    gas: `<span class="gauge-ico">${ICONS.fuel}</span>${km} km`,
-    hybrid: `${battery(pct)}<span class="gauge-ico">${ICONS.fuel}</span>${km} km`,
+    gas: fuelGauge,
   }[type];
+
+  const tire = (label, val) => `<div class="tire ${label.endsWith('Left') ? 'left' : 'right'}"><div class="v">${val}<small>psi</small></div><div class="l">${label}</div></div>`;
 
   app.innerHTML = `
     <a class="icon-btn back-btn" href="index.html" aria-label="Back">${ICONS.back}</a>
@@ -88,6 +76,17 @@
 
     <div class="vitals">
       ${VITALS.map(([label, val]) => `<div class="vital"><div class="v">${val}</div><div class="l">${label}</div></div>`).join('')}
+    </div>
+
+    <div class="tires">
+      <div class="tires-title">Tire Pressure</div>
+      <div class="tires-grid">
+        ${tire('Front Left', psi[0])}
+        <div class="tires-car">${ICONS.carTop}</div>
+        ${tire('Front Right', psi[1])}
+        ${tire('Rear Left', psi[2])}
+        ${tire('Rear Right', psi[3])}
+      </div>
     </div>
 
     <div class="temp-card">

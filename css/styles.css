@@ -380,7 +380,7 @@ textarea.input { resize: none; min-height: 96px; line-height: 1.4; }
 .car-card .status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .segmented {
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: repeat(2, 1fr);
   background: var(--surface);
   border-radius: 14px;
   padding: 4px;
@@ -394,7 +394,31 @@ textarea.input { resize: none; min-height: 96px; line-height: 1.4; }
 }
 .segmented button.sel { background: var(--accent); color: #fff; }
 
-.vitals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+.vitals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px; }
 .vital { background: var(--surface); border-radius: 18px; padding: 14px 12px; text-align: center; }
 .vital .v { font-size: 22px; font-weight: 600; }
 .vital .l { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+
+
+/* ---------- Tire pressure ---------- */
+.tires { background: var(--surface); border-radius: 18px; padding: 16px 18px 18px; margin-bottom: 26px; }
+.tires-title { font-size: 14px; color: var(--muted); font-weight: 500; margin-bottom: 12px; }
+.tires-grid { display: grid; grid-template-columns: 1fr 64px 1fr; row-gap: 22px; align-items: center; }
+.tires-car { grid-column: 2; grid-row: 1 / span 2; color: #55565b; display: grid; place-items: center; }
+.tires-car svg { width: 46px; height: 92px; }
+.tire.left { text-align: right; padding-right: 14px; }
+.tire.right { text-align: left; padding-left: 14px; }
+.tire .v { font-size: 24px; font-weight: 600; }
+.tire .v small { font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 3px; }
+.tire .l { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+
+/* ---------- Required field feedback ---------- */
+.field-label .req { color: var(--danger); margin-left: 3px; }
+.form-error { color: var(--danger); font-size: 14px; font-weight: 600; text-align: center; margin: -8px 0 14px; min-height: 18px; }
+.brand-grid.missing, .photo-drop.missing, .input.missing { box-shadow: 0 0 0 1.5px var(--danger); border-radius: 14px; }
+.photo-drop.missing { border-radius: 20px; }
+
+/* Wordmark / wide brand logos */
+.logo.wide { width: 44px; }
+.brand-tile .logo.wide { width: 58px; }
+.car-head .logo.wide { width: 54px; }

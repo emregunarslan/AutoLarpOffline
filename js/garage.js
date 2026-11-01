@@ -16,16 +16,15 @@
     const fuelIco = `<span class="gauge-ico">${ICONS.fuel}</span>`;
     const gauge = {
       electric: `${pct}%${battery}`,
-      gas: `${fuel}%${fuelIco}`,
-      hybrid: `${pct}%${battery}${fuel}%${fuelIco}`,
+      gas: `${fuelIco}Fuel`,
     }[powertrainOf(car)];
     return `
       <a class="car-card" href="car.html?id=${encodeURIComponent(car.id)}"
          style="background-image:url('${car.photo}');animation-delay:${i * 60}ms">
         <div class="inner">
           <div class="title-row">${logoHtml(car.brand)}<span class="title">${escapeHtml(car.title)}</span></div>
-          <div class="stat">${km}<small>km</small></div>
-          <div class="status">${escapeHtml(car.location || 'Parked')}</div>
+          <div class="stat">${km === null ? `${fuel}<small>%</small>` : `${km}<small>km</small>`}</div>
+          <div class="status">${escapeHtml(car.location || DEFAULT_LOCATION)}</div>
           <div class="desc">${escapeHtml(car.description || brandBySlug(car.brand).name)}</div>
           <div class="batt">${gauge}</div>
         </div>
