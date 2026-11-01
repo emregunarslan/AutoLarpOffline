@@ -119,7 +119,7 @@ export function assistantRoutes(app, { requireUser, cars }) {
   // Less thinking = faster replies. Newer Gemini models take thinkingLevel, older
   // Flash models take thinkingBudget (0 = off). Try each once; the first one the
   // model accepts is remembered, otherwise fall back to the model's default.
-  const SPEED_OPTIONS = [{ thinkingLevel: 'MINIMAL' }, { thinkingBudget: 0 }, null];
+  const SPEED_OPTIONS = [{ thinkingLevel: 'LOW' }, { thinkingBudget: 0 }, null];
   let speedOption = 0;
 
   async function generate(contents, system) {
