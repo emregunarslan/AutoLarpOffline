@@ -1,62 +1,48 @@
-// Tiny IndexedDB wrapper. All data stays on the device.
+// Talks to the AutoLarp server; vehicles and profile live in MongoDB per account.
 const DB = (() => {
-  const NAME = 'autolarp';
-  const VERSION = 1;
-  let dbPromise;
-
-  function open() {
-    if (!dbPromise) {
-      dbPromise = new Promise((resolve, reject) => {
-        const req = indexedDB.open(NAME, VERSION);
-        req.onupgradeneeded = () => {
-          const db = req.result;
-          if (!db.objectStoreNames.contains('cars')) db.createObjectStore('cars', { keyPath: 'id' });
-          if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
-        };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    }
-    return dbPromise;
-  }
-
-  async function run(store, mode, fn) {
-    const db = await open();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(store, mode);
-      const req = fn(tx.objectStore(store));
-      tx.oncomplete = () => resolve(req && req.result);
-      tx.onerror = () => reject(tx.error);
+  async function api(method, path, body) {
+    const res = await fetch(`/api${path}`, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : {},
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: 'same-origin',
     });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401 && !location.pathname.startsWith('/login')) {
+      location.replace('login.html');
+      return new Promise(() => {}); // page is leaving; never resolve
+    }
+    if (!res.ok) throw new Error(data.error || 'Something went wrong');
+    return data;
   }
 
   return {
-    async getCars() {
-      const cars = await run('cars', 'readonly', (s) => s.getAll());
-      return (cars || []).sort((a, b) => a.createdAt - b.createdAt);
-    },
-    getCar: (id) => run('cars', 'readonly', (s) => s.get(id)),
-    saveCar(car) {
-      if (!car.id) car.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-      if (!car.createdAt) car.createdAt = Date.now();
-      return run('cars', 'readwrite', (s) => s.put(car)).then(() => car);
-    },
-    deleteCar: (id) => run('cars', 'readwrite', (s) => s.delete(id)),
+    api,
+    getCars: () => api('GET', '/cars'),
+    getCar: (id) => api('GET', `/cars/${encodeURIComponent(id)}`).catch(() => null),
+    saveCar: (car) => (car.id
+      ? api('PUT', `/cars/${encodeURIComponent(car.id)}`, car)
+      : api('POST', '/cars', car)),
+    deleteCar: (id) => api('DELETE', `/cars/${encodeURIComponent(id)}`),
+    getProfile: () => api('GET', '/me'),
+    saveProfile: (changes) => api('PATCH', '/me', changes), // { name } and/or { avatar }
     async resetAll() {
-      await run('cars', 'readwrite', (s) => s.clear());
-      await run('meta', 'readwrite', (s) => s.clear());
+      await api('DELETE', '/data');
       sessionStorage.clear();
     },
-    async getProfile() {
-      const p = await run('meta', 'readonly', (s) => s.get('profile'));
-      if (p) return p;
-      const fresh = { name: 'Owner', memberSince: Date.now() };
-      await run('meta', 'readwrite', (s) => s.put(fresh, 'profile'));
-      return fresh;
+    async logout() {
+      await api('POST', '/logout');
+      sessionStorage.clear();
     },
-    saveProfile: (p) => run('meta', 'readwrite', (s) => s.put(p, 'profile')),
   };
 })();
+
+const NAME_MAX = 24;
+
+// Profile picture if set, otherwise the name's initials.
+function avatarHtml(profile) {
+  return profile.avatar ? `<img src="${profile.avatar}" alt="">` : escapeHtml(initials(profile.name));
+}
 
 // Used when a car has no location set (UofT Sandford Fleming Building).
 const DEFAULT_LOCATION = "10 King's College Rd";
@@ -85,8 +71,9 @@ const rand = (min, max) => Math.round(min + Math.random() * (max - min));
 
 // Gauge readings, re-rolled within realistic ranges each time the app is opened,
 // then kept for the session so every page shows the same numbers.
-// pct = battery %, km = electric range (null for gas), fuelBand = estimated fuel [low, high] %,
-// oil = oil life %, psi = tire pressures [FL, FR, RL, RR].
+// pct = battery %, km = estimated electric range (null for gas), fuel = estimated fuel %,
+// oil = oil life %, psi = tire pressures [FL, FR, RL, RR],
+// updatedAt = when the car last "reported in" (sometime in the past 24 hours).
 function vehicleStats(car) {
   const key = `stats:${car.id}:${powertrainOf(car)}`;
   const cached = sessionStorage.getItem(key);
@@ -95,18 +82,26 @@ function vehicleStats(car) {
   const electric = powertrainOf(car) === 'electric';
   const pct = rand(30, 92);
   const kmPerPct = 4.2 + Math.random() * 1.4; // 420–560 km on a full charge
-  const fuel = rand(20, 95);
-  const low = Math.min(80, Math.floor(fuel / 20) * 20);
   const basePsi = electric ? 42 : 35;
   const stats = {
     pct,
     km: electric ? Math.round(pct * kmPerPct) : null,
-    fuelBand: [low, low + 20],
+    fuel: rand(20, 95),
     oil: rand(35, 95),
     psi: [0, 1, 2, 3].map(() => basePsi + rand(-2, 1)),
+    updatedAt: Date.now() - rand(60e3, 24 * 3600e3),
   };
   sessionStorage.setItem(key, JSON.stringify(stats));
   return stats;
+}
+
+// "Updated 3 h 12 min ago"
+function timeAgo(ts) {
+  const min = Math.max(1, Math.round((Date.now() - ts) / 60e3));
+  if (min < 60) return `${min} min ago`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h} h ${m} min ago` : `${h} h ago`;
 }
 
 function escapeHtml(s) {

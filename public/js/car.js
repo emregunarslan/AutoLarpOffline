@@ -6,8 +6,7 @@
 
   document.title = car.title;
   const type = powertrainOf(car);
-  const { pct, km, fuelBand, oil, psi } = vehicleStats(car);
-  const fuelRange = `${fuelBand[0]}–${fuelBand[1]}%`;
+  const { pct, km, fuel, oil, psi, updatedAt } = vehicleStats(car);
   const rear = trunkName(car);
   const place = car.location || DEFAULT_LOCATION;
 
@@ -54,18 +53,15 @@
     gas: { quick: ['lock', 'start', 'climate', 'trunk'], grid: [...theme.features, ...COMMON] },
   }[type];
 
-  const VITALS = {
-    electric: [['Battery', `${pct}%`], ['Charge Target', '80%']],
-    gas: [['Estimated Fuel', fuelRange], ['Oil Life', `${oil}%`]],
-  }[type];
-
-  // Only electric cars get a range estimate; gas shows an estimated fuel band.
+  // Everything the car reports lives in one status card.
   const battery = (p) => `<span class="battery"><i style="width:${p}%"></i></span>`;
-  const fuelGauge = `<span class="gauge-ico">${ICONS.fuel}</span>Estimated fuel ${fuelRange}`;
-  const gauge = {
-    electric: `${battery(pct)}${km} km`,
-    gas: fuelGauge,
-  }[type];
+  const headline = type === 'electric'
+    ? { icon: battery(pct), label: 'Estimated range', value: `${km} km` }
+    : { icon: `<span class="gauge-ico">${ICONS.fuel}</span>`, label: 'Estimated fuel', value: `${fuel}%` };
+  const ROWS = type === 'electric'
+    ? [['Battery', `${pct}%`], ['Charge target', '80%']]
+    : [['Oil life', `${oil}%`]];
+  const row = (label, value, id = '') => `<div class="srow"><span>${label}</span><b${id ? ` id="${id}"` : ''}>${value}</b></div>`;
 
   const tire = (label, val) => `<div class="tire ${label.endsWith('Left') ? 'left' : 'right'}"><div class="v">${val}<small>psi</small></div><div class="l">${label}</div></div>`;
 
@@ -73,10 +69,6 @@
     <a class="icon-btn back-btn" href="./" aria-label="Back">${ICONS.back}</a>
     <div class="car-head">
       <h1>${logoHtml(car.brand)}<span class="name">${escapeHtml(car.title)}</span></h1>
-    </div>
-    <div class="car-meta">
-      <div class="range">${gauge}</div>
-      <div class="sub" id="status"></div>
     </div>
 
     <div class="car-hero"><img src="${car.photo}" alt=""></div>
@@ -87,11 +79,17 @@
         `<button class="quick-btn${ALL[k][4] ? ' on' : ''}" data-k="${k}" aria-label="${ALL[k][0]}">${ICONS[ALL[k][1]]}</button>`).join('')}
     </div>
 
-    <div class="vitals">
-      ${VITALS.map(([label, val]) => `<div class="vital"><div class="v">${val}</div><div class="l">${label}</div></div>`).join('')}
-    </div>
-
-    <div class="tires">
+    <section class="status-card">
+      <div class="status-head"><span>Vehicle Status</span><span>Last updated ${timeAgo(updatedAt)}</span></div>
+      <div class="status-main">
+        <div class="status-ico">${headline.icon}</div>
+        <div><div class="l">${headline.label}</div><div class="v">${headline.value}</div></div>
+      </div>
+      <div class="status-rows">
+        ${ROWS.map(([l, v]) => row(l, v)).join('')}
+        ${row('Status', '', 'status')}
+        ${row('Location', escapeHtml(place))}
+      </div>
       <div class="tires-title">Tire Pressure</div>
       <div class="tires-grid">
         ${tire('Front Left', psi[0])}
@@ -100,7 +98,7 @@
         ${tire('Rear Left', psi[2])}
         ${tire('Rear Right', psi[3])}
       </div>
-    </div>
+    </section>
 
     <div class="temp-card">
       <div><div class="label" id="climateLabel">Interior · Climate Off</div><div class="val"><span id="temp">21</span>°</div></div>
@@ -116,9 +114,6 @@
     </div>
     </div>
 
-    <div class="section-label">Location</div>
-    <div class="group"><div class="row"><span class="ico">${ICONS.location}</span>
-      <div class="txt"><div class="t"><span>${escapeHtml(place)}</span></div><div class="s">Parked · updated just now</div></div></div></div>
   `;
 
   const toastEl = document.getElementById('toast');
@@ -137,11 +132,17 @@
     setTimeout(() => btn.classList.remove('cooling'), COOLDOWN_MS);
   }
 
+  // What to say if a button is pressed again during its cooldown.
+  function busyText(k, label, on) {
+    if (k === 'lock') return on ? 'Locking… please wait' : 'Unlocking… please wait';
+    if (k === 'start') return on ? 'Starting engine… please wait' : 'Stopping engine… please wait';
+    return `${label} is still moving…`;
+  }
+
   const statusEl = document.getElementById('status');
   const state = { lock: true, start: false };
   function renderStatus() {
-    const running = state.start ? '<span class="dot"></span>Engine Running' : '<span class="dot"></span>Parked';
-    statusEl.innerHTML = `${running} · ${state.lock ? 'Locked' : 'Unlocked'}`;
+    statusEl.textContent = `${state.start ? 'Engine running' : 'Parked'} · ${state.lock ? 'Locked' : 'Unlocked'}`;
   }
   renderStatus();
 
@@ -150,7 +151,7 @@
     if (!btn) return;
     const k = btn.dataset.k;
     const [label, , onText, offText] = ALL[k];
-    if (btn.classList.contains('cooling')) { toast(`${label} is still moving…`); return; }
+    if (btn.classList.contains('cooling')) { toast(busyText(k, label, btn.classList.contains('on'))); return; }
     if (navigator.vibrate) navigator.vibrate(10);
     if (COOLDOWN.has(k)) startCooldown(btn);
 
