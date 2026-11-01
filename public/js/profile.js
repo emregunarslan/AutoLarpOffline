@@ -182,7 +182,7 @@
   // A miniature of the real homepage, rebuilt whenever the sheet opens.
   function miniHome() {
     const named = profile.name && profile.name !== 'Owner';
-    const greeting = named ? `Hello ${escapeHtml(profile.name.split(' ')[0])}` : 'Hello';
+    const greeting = named ? `Welcome back, ${escapeHtml(firstName(profile.name))}` : 'Hello';
     const avatar = named ? escapeHtml(initials(profile.name)) : ICONS.user;
     const cards = previewCars().map((c) => `
       <div class="mini-card${c.photo ? ' photo' : ''}"${c.photo ? ` style="background-image:url('${c.photo}')"` : ''}>

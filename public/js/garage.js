@@ -5,7 +5,7 @@
   const [cars, profile] = await Promise.all([DB.getCars(), DB.getProfile()]);
   const hasName = profile.name && profile.name !== 'Owner';
   avatar.innerHTML = hasName || profile.avatar ? avatarHtml(profile) : ICONS.user;
-  document.getElementById('greeting').textContent = hasName ? `Hello ${profile.name.split(' ')[0]}` : 'Hello';
+  document.getElementById('greeting').textContent = hasName ? `Welcome back, ${firstName(profile.name)}` : 'Hello';
 
   if (!cars.length) {
     list.innerHTML = `<div class="empty">${ICONS.car}<div>No vehicles linked to this account</div></div>`;

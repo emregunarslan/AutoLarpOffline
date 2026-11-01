@@ -40,6 +40,15 @@ const DB = (() => {
 
 const NAME_MAX = 24;
 
+// First name, capitalized: "john smith" -> "John" for "Welcome back, John".
+// ALL-CAPS input is normalized too ("JOHN" -> "John"), but mixed-case names
+// like "McDonald" are kept as written.
+function firstName(name) {
+  let first = String(name || '').split(' ')[0];
+  if (first && first === first.toUpperCase()) first = first.toLowerCase();
+  return first.charAt(0).toUpperCase() + first.slice(1);
+}
+
 // Profile picture if set, otherwise the name's initials.
 function avatarHtml(profile) {
   return profile.avatar ? `<img src="${profile.avatar}" alt="">` : escapeHtml(initials(profile.name));

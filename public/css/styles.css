@@ -171,7 +171,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 .car-hero {
   position: relative;
-  margin: 22px -20px 8px;
+  margin: 22px 0 8px;
   aspect-ratio: 16 / 9;
   display: grid; place-items: center;
 }
@@ -870,22 +870,6 @@ textarea.input { resize: none; min-height: 96px; line-height: 1.4; }
 .chat-send svg { width: 20px; height: 20px; }
 body:has(.chat-fab) .app { padding-bottom: calc(var(--safe-bottom) + 100px); }
 
-/* ---------- Fullscreen toggle ---------- */
-.fullscreen-btn {
-  position: fixed; z-index: 15;
-  left: 50%; bottom: calc(var(--safe-bottom) + 18px);
-  transform: translateX(-50%);
-  width: 42px; height: 42px; border-radius: 50%;
-  background: color-mix(in srgb, var(--surface-2) 96%, transparent);
-  backdrop-filter: blur(10px);
-  color: var(--text-2);
-  display: grid; place-items: center;
-  box-shadow: 0 6px 18px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.08);
-}
-.fullscreen-btn svg { width: 20px; height: 20px; }
-.fullscreen-btn:active { transform: translateX(-50%) scale(.9); }
-.fullscreen-btn.off { display: none; }
-
 /* ---------- Account screens (slide in from the right) ---------- */
 .subpage {
   position: fixed; inset: 0; z-index: 25;
@@ -932,17 +916,13 @@ body:has(.chat-fab) .app { padding-bottom: calc(var(--safe-bottom) + 100px); }
   background: #dfe1e4 url('amexplat.png') center/cover no-repeat;
   border: 1px solid rgba(255,255,255,.5);
 }
-/* The user's name over the card's bottom-left, covering the baked-in cardholder */
+/* The user's name printed on the card's bottom-left, like a real embossed cardholder */
 .pay-card-name {
   position: absolute; left: 8%; bottom: 7.5%;
-  min-width: 32%; max-width: 60%;
+  max-width: 60%;
   font-size: 13px; font-weight: 800; letter-spacing: .5px;
   color: #22252a; text-transform: uppercase;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  padding: 4px 9px; border-radius: 5px;
-  background: linear-gradient(135deg, rgba(236,237,239,.9), rgba(203,206,211,.78));
-  backdrop-filter: blur(8px);
-  box-shadow: 0 1px 4px rgba(0,0,0,.28);
 }
 .subpage-toast { white-space: normal; width: max-content; max-width: calc(100% - 40px); text-align: center; border-radius: 18px; line-height: 1.35; }
 .chat-head-actions { display: flex; gap: 8px; }
