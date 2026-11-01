@@ -206,7 +206,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 }
 .ctrl svg { width: 28px; height: 28px; }
 .ctrl:active { transform: scale(.95); }
-.ctrl.on { background: var(--accent); color: #fff; box-shadow: 0 8px 22px rgba(62,106,225,.35); }
+.ctrl.on { background: var(--accent); color: #fff; box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 35%, transparent); }
 
 .temp-card {
   background: var(--surface);
@@ -422,3 +422,68 @@ textarea.input { resize: none; min-height: 96px; line-height: 1.4; }
 .logo.wide { width: 44px; }
 .brand-tile .logo.wide { width: 58px; }
 .car-head .logo.wide { width: 54px; }
+
+.header h1.greeting { font-size: 32px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; margin-right: 12px; }
+
+/* ---------- Cooldown (physical actions) ---------- */
+.ctrl, .quick-btn { position: relative; }
+.ctrl > *, .quick-btn > * { position: relative; z-index: 1; }
+.ctrl.cooling::after, .quick-btn.cooling::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--accent) 55%, #fff);
+  animation: cooldown var(--cooldown, 4s) ease-in forwards;
+  pointer-events: none;
+}
+.quick-btn.cooling::after {
+  inset: auto; left: 50%; top: 50%;
+  width: 58px; height: 58px; margin: -29px 0 0 -29px;
+  border-radius: 50%;
+}
+@keyframes cooldown { from { opacity: .55; } to { opacity: 0; } }
+
+/* ---------- Body type chips / location suggestion / reset ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; border-radius: 14px; }
+.chip {
+  padding: 10px 16px; border-radius: 999px;
+  background: var(--surface); border: 1.5px solid transparent;
+  font-size: 15px; font-weight: 600; color: #b4b5ba;
+  transition: background .2s, color .2s, border-color .2s;
+}
+.chip.sel { background: #24304f; border-color: var(--accent); color: #fff; }
+
+.input.with-suggest { margin-bottom: 10px; }
+.suggest {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin: 0 0 22px 2px;
+  padding: 8px 12px; border-radius: 999px;
+  background: #24304f; color: #a9c0ff;
+  font-size: 14px; font-weight: 600;
+}
+.suggest svg { width: 16px; height: 16px; flex: none; }
+.chips.missing { box-shadow: 0 0 0 1.5px var(--danger); padding: 4px; }
+
+.row.danger { justify-content: center; }
+.row.danger .t { color: var(--danger); justify-content: center; }
+
+/* ---------- Brand control menu ---------- */
+.brand-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 4px 14px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+}
+.brand-head .logo { width: 24px; height: 24px; }
+.brand-head .logo.wide { width: 50px; }
+.brand-head::after { content: ""; flex: 1; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), transparent); opacity: .7; }
+.control-wrap { position: relative; margin-bottom: 26px; }
+.control-wrap .control-grid { position: relative; margin-bottom: 0; }
+.brand-watermark {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  opacity: .1; pointer-events: none;
+}
+.brand-watermark .logo { width: 72%; height: 72%; }
+.brand-watermark .logo.wide { width: 90%; height: 40%; }
+.ctrl { background: color-mix(in srgb, var(--surface) 78%, transparent); }

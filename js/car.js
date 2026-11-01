@@ -2,11 +2,13 @@
   const app = document.getElementById('app');
   const id = new URLSearchParams(location.search).get('id');
   const car = id && (await DB.getCar(id));
-  if (!car) { location.replace('index.html'); return; }
+  if (!car) { location.replace('./'); return; }
 
   document.title = car.title;
   const type = powertrainOf(car);
-  const { pct, fuel, oil, km, psi } = fakeRange(car);
+  const { pct, km, fuelBand, oil, psi } = vehicleStats(car);
+  const fuelRange = `${fuelBand[0]}–${fuelBand[1]}%`;
+  const rear = trunkName(car);
   const place = car.location || DEFAULT_LOCATION;
 
   // [key, label, icon, onText, offText (null = one-shot), startsOn]
@@ -14,7 +16,7 @@
     lock: ['Lock', 'lock', 'Locked', 'Unlocked', true],
     climate: ['Climate', 'fan', 'Climate on', 'Climate off'],
     start: ['Remote Start', 'power', 'Engine started', 'Engine stopped'],
-    trunk: ['Trunk', 'trunk', 'Trunk opened', 'Trunk closed'],
+    trunk: [rear, 'trunk', `${rear} opened`, `${rear} closed`],
     charge: ['Charge Port', 'bolt', 'Charge port opened', 'Charge port closed'],
     charging: ['Charging', 'plug', 'Charging started', 'Charging stopped'],
     timer: ['Charge Timer', 'clock', 'Charge timer set', 'Charge timer off'],
@@ -31,24 +33,35 @@
     locate: ['Find Vehicle', 'location', 'Vehicle location updated', null],
     garage: ['Garage Door', 'home', 'Garage door signal sent', null],
     valet: ['Valet Mode', 'valet', 'Valet Mode on', 'Valet Mode off'],
+    ...SIGNATURE_FEATURES,
   };
 
+  const theme = brandTheme(car.brand);
+  const brandName = brandBySlug(car.brand).name;
+  document.body.style.setProperty('--accent', theme.accent);
+
+  // Buttons that move something physical; they lock out briefly after each press.
+  const COOLDOWN_MS = 4000;
+  const COOLDOWN = new Set(['lock', 'start', 'trunk', 'charge', 'windows', 'sunroof', ...SIGNATURE_COOLDOWN]);
+
   // Features shared by most luxury-brand apps, plus powertrain-specific ones.
-  const COMMON = ['defrost', 'seat', 'seatcool', 'wheel', 'windows', 'sunroof',
+  // Brand signature features lead; trucks swap the sunroof for bed lights.
+  const COMMON = ['defrost', 'seat', 'seatcool', 'wheel', 'windows',
+                  bodyTypeOf(car) === 'truck' ? 'bedlights' : 'sunroof',
                   'horn', 'flash', 'panic', 'locate', 'garage', 'valet'];
   const LAYOUT = {
-    electric: { quick: ['lock', 'climate', 'charge', 'trunk'], grid: ['charging', 'timer', 'precond', ...COMMON] },
-    gas: { quick: ['lock', 'start', 'climate', 'trunk'], grid: COMMON },
+    electric: { quick: ['lock', 'climate', 'charge', 'trunk'], grid: [...theme.features, 'charging', 'timer', 'precond', ...COMMON] },
+    gas: { quick: ['lock', 'start', 'climate', 'trunk'], grid: [...theme.features, ...COMMON] },
   }[type];
 
   const VITALS = {
     electric: [['Battery', `${pct}%`], ['Charge Target', '80%']],
-    gas: [['Fuel', `${fuel}%`], ['Oil Life', `${oil}%`]],
+    gas: [['Estimated Fuel', fuelRange], ['Oil Life', `${oil}%`]],
   }[type];
 
-  // Only the electric side gets a range estimate; fuel is shown as a percentage.
+  // Only electric cars get a range estimate; gas shows an estimated fuel band.
   const battery = (p) => `<span class="battery"><i style="width:${p}%"></i></span>`;
-  const fuelGauge = `<span class="gauge-ico">${ICONS.fuel}</span>${fuel}%`;
+  const fuelGauge = `<span class="gauge-ico">${ICONS.fuel}</span>Estimated fuel ${fuelRange}`;
   const gauge = {
     electric: `${battery(pct)}${km} km`,
     gas: fuelGauge,
@@ -57,7 +70,7 @@
   const tire = (label, val) => `<div class="tire ${label.endsWith('Left') ? 'left' : 'right'}"><div class="v">${val}<small>psi</small></div><div class="l">${label}</div></div>`;
 
   app.innerHTML = `
-    <a class="icon-btn back-btn" href="index.html" aria-label="Back">${ICONS.back}</a>
+    <a class="icon-btn back-btn" href="./" aria-label="Back">${ICONS.back}</a>
     <div class="car-head">
       <h1>${logoHtml(car.brand)}<span class="name">${escapeHtml(car.title)}</span></h1>
     </div>
@@ -67,7 +80,7 @@
     </div>
 
     <div class="car-hero"><img src="${car.photo}" alt=""></div>
-    ${car.description ? `<p class="desc-line">${escapeHtml(car.description)}</p>` : ''}
+    <p class="desc-line">${[BODY_TYPES[bodyTypeOf(car)], car.description].filter(Boolean).map(escapeHtml).join(' · ')}</p>
 
     <div class="quick-row">
       ${LAYOUT.quick.map((k) =>
@@ -94,10 +107,13 @@
       <div class="steps"><button id="tdown" aria-label="Cooler">−</button><button id="tup" aria-label="Warmer">+</button></div>
     </div>
 
-    <div class="section-label">Controls</div>
+    <div class="brand-head">${logoHtml(car.brand)}<span>${escapeHtml(brandName)} Controls</span></div>
+    <div class="control-wrap">
+    <div class="brand-watermark" aria-hidden="true">${logoHtml(car.brand)}</div>
     <div class="control-grid">
       ${LAYOUT.grid.map((k) =>
         `<button class="ctrl" data-k="${k}">${ICONS[ALL[k][1]]}<span>${ALL[k][0]}</span></button>`).join('')}
+    </div>
     </div>
 
     <div class="section-label">Location</div>
@@ -114,6 +130,13 @@
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1600);
   }
 
+  // Fills the button with colour that fades out; presses are ignored until it's gone.
+  function startCooldown(btn) {
+    btn.style.setProperty('--cooldown', `${COOLDOWN_MS}ms`);
+    btn.classList.add('cooling');
+    setTimeout(() => btn.classList.remove('cooling'), COOLDOWN_MS);
+  }
+
   const statusEl = document.getElementById('status');
   const state = { lock: true, start: false };
   function renderStatus() {
@@ -126,8 +149,10 @@
     const btn = e.target.closest('[data-k]');
     if (!btn) return;
     const k = btn.dataset.k;
-    const [, , onText, offText] = ALL[k];
+    const [label, , onText, offText] = ALL[k];
+    if (btn.classList.contains('cooling')) { toast(`${label} is still moving…`); return; }
     if (navigator.vibrate) navigator.vibrate(10);
+    if (COOLDOWN.has(k)) startCooldown(btn);
 
     // One-shot actions flash briefly instead of staying on.
     if (offText === null) {

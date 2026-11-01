@@ -14,7 +14,7 @@
 </head>
 <body>
   <main class="app">
-    <a class="icon-btn back-btn" href="index.html" aria-label="Back" id="back"></a>
+    <a class="icon-btn back-btn" href="./" aria-label="Back" id="back"></a>
 
     <section class="profile-top">
       <div class="big-avatar" id="bigAvatar"></div>
@@ -27,6 +27,10 @@
 
     <div class="section-label">Account</div>
     <div class="group" id="extras"></div>
+
+    <div class="group">
+      <button class="row danger" id="reset"><div class="txt"><div class="t"><span>Reset All Data</span></div></div></button>
+    </div>
   </main>
 
   <div class="sheet-backdrop" id="backdrop"></div>
@@ -52,15 +56,18 @@
         <button type="button" data-v="gas">Gas</button>
       </div>
 
+      <div class="field-label">Body Type<span class="req">*</span></div>
+      <div class="chips" id="bodyType"></div>
+
       <div class="field-label">Name<span class="req">*</span></div>
       <input class="input" id="title" maxlength="40" placeholder="e.g. Black Edition">
 
       <div class="field-label">Description</div>
       <textarea class="input" id="desc" maxlength="140" placeholder="e.g. S-Class S 580 · Obsidian Black"></textarea>
 
-      <div class="field-label">Location</div>
-      <input class="input" id="location" maxlength="60" placeholder="10 King's College Rd">
-
+      <div class="field-label">Location<span class="req">*</span></div>
+      <input class="input with-suggest" id="location" maxlength="80" placeholder="Where is it parked?">
+      <button type="button" class="suggest" id="suggestLoc"></button>
 
       <div class="form-error" id="formError"></div>
       <button class="btn" type="submit" id="save">Save</button>

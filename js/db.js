@@ -42,6 +42,11 @@ const DB = (() => {
       return run('cars', 'readwrite', (s) => s.put(car)).then(() => car);
     },
     deleteCar: (id) => run('cars', 'readwrite', (s) => s.delete(id)),
+    async resetAll() {
+      await run('cars', 'readwrite', (s) => s.clear());
+      await run('meta', 'readwrite', (s) => s.clear());
+      sessionStorage.clear();
+    },
     async getProfile() {
       const p = await run('meta', 'readonly', (s) => s.get('profile'));
       if (p) return p;
@@ -65,20 +70,43 @@ function powertrainOf(car) {
   return POWERTRAINS[car.powertrain] ? car.powertrain : 'electric';
 }
 
-// Deterministic gauges per car so the numbers look real but stay stable.
-// pct = battery %, fuel = fuel tank %, km = electric-only range (null for gas),
-// psi = tire pressures [FL, FR, RL, RR].
-function fakeRange(car) {
-  let h = 0;
-  for (const c of car.id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  const type = powertrainOf(car);
-  const pct = 55 + (h % 41);          // 55–95%
-  const fuel = 40 + ((h >>> 7) % 56); // 40–95%
-  const oil = 60 + ((h >>> 13) % 38); // 60–97%
-  const km = { electric: Math.round(pct * 5.1), gas: null }[type];
-  const basePsi = { electric: 42, gas: 35 }[type];
-  const psi = [0, 1, 2, 3].map((i) => basePsi + ((h >>> (17 + i * 2)) % 3) - 1);
-  return { pct, fuel, oil, km, psi };
+const BODY_TYPES = { sedan: 'Sedan', suv: 'SUV', truck: 'Truck' };
+
+function bodyTypeOf(car) {
+  return BODY_TYPES[car.bodyType] ? car.bodyType : 'sedan';
+}
+
+// What the rear opening is called for each body type.
+function trunkName(car) {
+  return { suv: 'Liftgate', truck: 'Tailgate' }[bodyTypeOf(car)] || 'Trunk';
+}
+
+const rand = (min, max) => Math.round(min + Math.random() * (max - min));
+
+// Gauge readings, re-rolled within realistic ranges each time the app is opened,
+// then kept for the session so every page shows the same numbers.
+// pct = battery %, km = electric range (null for gas), fuelBand = estimated fuel [low, high] %,
+// oil = oil life %, psi = tire pressures [FL, FR, RL, RR].
+function vehicleStats(car) {
+  const key = `stats:${car.id}:${powertrainOf(car)}`;
+  const cached = sessionStorage.getItem(key);
+  if (cached) return JSON.parse(cached);
+
+  const electric = powertrainOf(car) === 'electric';
+  const pct = rand(30, 92);
+  const kmPerPct = 4.2 + Math.random() * 1.4; // 420–560 km on a full charge
+  const fuel = rand(20, 95);
+  const low = Math.min(80, Math.floor(fuel / 20) * 20);
+  const basePsi = electric ? 42 : 35;
+  const stats = {
+    pct,
+    km: electric ? Math.round(pct * kmPerPct) : null,
+    fuelBand: [low, low + 20],
+    oil: rand(35, 95),
+    psi: [0, 1, 2, 3].map(() => basePsi + rand(-2, 1)),
+  };
+  sessionStorage.setItem(key, JSON.stringify(stats));
+  return stats;
 }
 
 function escapeHtml(s) {

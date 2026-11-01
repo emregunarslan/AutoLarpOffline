@@ -42,7 +42,7 @@
         <span class="thumb" style="background-image:url('${c.photo}')"></span>
         <div class="txt">
           <div class="t">${logoHtml(c.brand)}<span>${escapeHtml(c.title)}</span></div>
-          <div class="s">${POWERTRAINS[powertrainOf(c)]} · ${escapeHtml(c.description || brandBySlug(c.brand).name)}</div>
+          <div class="s">${POWERTRAINS[powertrainOf(c)]} · ${BODY_TYPES[bodyTypeOf(c)]} · ${escapeHtml(c.description || brandBySlug(c.brand).name)}</div>
         </div>
         <span class="chev">${ICONS.chev}</span>
       </button>`).join('') + `
@@ -58,7 +58,25 @@
   });
 
   // ---------- Add / edit sheet ----------
-  const state = { id: null, photo: null, brand: null, powertrain: 'electric' };
+  const state = { id: null, photo: null, brand: null, powertrain: 'electric', bodyType: null };
+
+  $('bodyType').innerHTML = Object.entries(BODY_TYPES)
+    .map(([v, label]) => `<button type="button" class="chip" data-v="${v}">${label}</button>`).join('');
+  $('bodyType').addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-v]');
+    if (!chip) return;
+    state.bodyType = chip.dataset.v;
+    syncBodyType();
+    validate();
+  });
+  function syncBodyType() {
+    $('bodyType').querySelectorAll('[data-v]').forEach((b) => b.classList.toggle('sel', b.dataset.v === state.bodyType));
+  }
+
+  // Any text is accepted as a location; this just offers the default as a one-tap fill.
+  $('suggestLoc').innerHTML = `${ICONS.location}<span>Use ${escapeHtml(DEFAULT_LOCATION)}</span>`;
+  $('suggestLoc').onclick = () => { $('location').value = DEFAULT_LOCATION; validate(); };
+  $('location').addEventListener('input', validate);
 
   $('powertrain').addEventListener('click', (e) => {
     const seg = e.target.closest('[data-v]');
@@ -96,13 +114,15 @@
   function missingField() {
     if (!state.brand) return ['Choose your car brand', $('brands')];
     if (!state.photo) return ['Add a photo of your vehicle', $('drop')];
+    if (!state.bodyType) return ['Choose a body type', $('bodyType')];
     if (!$('title').value.trim()) return ['Give your vehicle a name', $('title')];
+    if (!$('location').value.trim()) return ['Enter where your vehicle is parked', $('location')];
     return null;
   }
 
   // Clears error highlights as the user fills fields in.
   function validate() {
-    [$('brands'), $('drop'), $('title')].forEach((el) => el.classList.remove('missing'));
+    [$('brands'), $('drop'), $('bodyType'), $('title'), $('location')].forEach((el) => el.classList.remove('missing'));
     $('formError').textContent = '';
   }
 
@@ -112,7 +132,9 @@
     setPhoto(car ? car.photo : null);
     $('title').value = car ? car.title : '';
     $('desc').value = car ? car.description || '' : '';
-    $('location').value = car ? car.location || DEFAULT_LOCATION : DEFAULT_LOCATION;
+    $('location').value = car ? car.location || '' : '';
+    state.bodyType = car && BODY_TYPES[car.bodyType] ? car.bodyType : null;
+    syncBodyType();
     state.powertrain = car ? powertrainOf(car) : 'electric';
     syncPowertrain();
     $('photo').value = '';
@@ -162,6 +184,7 @@
       description: $('desc').value.trim(),
       location: $('location').value.trim(),
       powertrain: state.powertrain,
+      bodyType: state.bodyType,
       brand: state.brand,
       photo: state.photo,
     });
@@ -194,4 +217,11 @@
       img.src = url;
     });
   }
+
+  // ---------- Reset ----------
+  $('reset').onclick = async () => {
+    if (!confirm('Reset all data? This removes every vehicle and your profile from this device.')) return;
+    await DB.resetAll();
+    location.replace('./');
+  };
 })();
