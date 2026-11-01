@@ -1,0 +1,9 @@
+{
+  "name": "Garage",
+  "short_name": "Garage",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#17181b",
+  "theme_color": "#17181b",
+  "icons": [{ "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
