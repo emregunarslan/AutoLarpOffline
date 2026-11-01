@@ -11,6 +11,56 @@
   let carsPromise = null;
   let busy = false;
 
+  // ---------- Voice replies (ElevenLabs via /api/tts) ----------
+  const VOICE_KEY = 'chat:voice';
+  let voiceOn = localStorage.getItem(VOICE_KEY) !== 'off';
+  let voiceAvailable = true; // turned off for the session if the server has no key
+  let audioCtx = null;
+  let playing = null;
+
+  // Phones only allow sound that starts from a tap, so the audio context is
+  // created/resumed during the tap that sends the message and reused for the reply.
+  function unlockAudio() {
+    if (!voiceOn || !voiceAvailable) return;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    audioCtx ??= new Ctx();
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+  }
+
+  function stopVoice() {
+    try { playing?.stop(); } catch { /* already stopped */ }
+    playing = null;
+  }
+
+  async function speak(text) {
+    if (!voiceOn || !voiceAvailable || !audioCtx || !text) return;
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ text }),
+      });
+      if (res.status === 503) {
+        voiceAvailable = false;
+        renderVoiceButton();
+        bubble({ role: 'assistant', content: (await res.json().catch(() => ({}))).error || 'Voice replies aren\'t set up.', error: true });
+        return;
+      }
+      if (!res.ok) return console.warn('Voice reply failed:', res.status);
+      const audio = await audioCtx.decodeAudioData(await res.arrayBuffer());
+      if (!voiceOn) return;
+      stopVoice();
+      playing = audioCtx.createBufferSource();
+      playing.buffer = audio;
+      playing.connect(audioCtx.destination);
+      playing.start();
+    } catch (err) {
+      console.warn('Voice reply failed:', err);
+    }
+  }
+
   const fab = document.createElement('button');
   fab.className = 'chat-fab';
   fab.setAttribute('aria-label', 'Open assistant');
@@ -23,7 +73,10 @@
   panel.innerHTML = `
     <div class="chat-head">
       <span class="chat-title">${ICONS.sparkle}<span>Concierge</span></span>
-      <button class="chat-close" aria-label="Close">${ICONS.close}</button>
+      <span class="chat-head-actions">
+        <button class="chat-voice" type="button"></button>
+        <button class="chat-close" aria-label="Close">${ICONS.close}</button>
+      </span>
     </div>
     <div class="chat-log" aria-live="polite"></div>
     <div class="chat-suggest"></div>
@@ -38,6 +91,23 @@
   const log = panel.querySelector('.chat-log');
   const input = panel.querySelector('.chat-input');
   const suggest = panel.querySelector('.chat-suggest');
+  const voiceBtn = panel.querySelector('.chat-voice');
+
+  function renderVoiceButton() {
+    const on = voiceOn && voiceAvailable;
+    voiceBtn.innerHTML = on ? ICONS.speaker : ICONS.mute;
+    voiceBtn.classList.toggle('on', on);
+    voiceBtn.setAttribute('aria-label', on ? 'Mute voice replies' : 'Read replies aloud');
+    voiceBtn.setAttribute('aria-pressed', String(on));
+  }
+  renderVoiceButton();
+  voiceBtn.onclick = () => {
+    voiceOn = !(voiceOn && voiceAvailable);
+    voiceAvailable = true; // let them retry after fixing the key
+    localStorage.setItem(VOICE_KEY, voiceOn ? 'on' : 'off');
+    if (voiceOn) unlockAudio(); else stopVoice();
+    renderVoiceButton();
+  };
 
   function bubble(msg) {
     const el = document.createElement('div');
@@ -69,7 +139,10 @@
     renderSuggestions();
     setTimeout(() => input.focus(), 250);
   }
-  const close = () => document.body.classList.remove('chat-open');
+  function close() {
+    stopVoice();
+    document.body.classList.remove('chat-open');
+  }
 
   // Live readings shown in the app, so the assistant can talk about range and fuel.
   async function readings() {
@@ -92,6 +165,8 @@
   async function send(text) {
     if (busy || !text.trim()) return;
     busy = true;
+    unlockAudio();
+    stopVoice();
     suggest.hidden = true;
     const userMsg = { role: 'user', content: text.trim() };
     history.push(userMsg);
@@ -113,6 +188,7 @@
       save();
       bubble(reply);
       data.actions.forEach(apply);
+      speak(data.reply);
     } catch (err) {
       typing.remove();
       history.pop(); // let them retry the same message

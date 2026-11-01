@@ -8,6 +8,7 @@ import readline from 'node:readline/promises';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { assistantRoutes } from './assistant.js';
+import { ttsRoutes } from './tts.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const ENV_FILE = path.join(ROOT, '.env');
@@ -37,20 +38,21 @@ async function mongoUri() {
   return uri;
 }
 
-// Gemini API key for the AI assistant: asked for once (Enter skips and turns the assistant off).
-async function askForGeminiKey() {
-  if ('GEMINI_API_KEY' in process.env || !process.stdin.isTTY) return;
+// Optional API keys, asked for once on first start (Enter skips; the feature stays off).
+async function askOnce(name, what, where) {
+  if (name in process.env || !process.stdin.isTTY) return;
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  console.log('\nOptional: paste a Gemini API key to turn on the AI assistant (from aistudio.google.com/apikey).');
-  const key = (await rl.question('Gemini API key (Enter to skip): ')).trim();
+  console.log(`\nOptional: paste ${what} (from ${where}).`);
+  const key = (await rl.question(`${name} (Enter to skip): `)).trim();
   rl.close();
-  fs.appendFileSync(ENV_FILE, `GEMINI_API_KEY=${key}\n`, { mode: 0o600 });
-  process.env.GEMINI_API_KEY = key;
-  console.log(key ? 'Saved to .env.\n' : 'Skipped — add GEMINI_API_KEY to .env later to turn the assistant on.\n');
+  fs.appendFileSync(ENV_FILE, `${name}=${key}\n`, { mode: 0o600 });
+  process.env[name] = key;
+  console.log(key ? 'Saved to .env.\n' : `Skipped — add ${name} to .env later to turn it on.\n`);
 }
 
 const client = new MongoClient(await mongoUri());
-await askForGeminiKey();
+await askOnce('GEMINI_API_KEY', 'a Gemini API key to turn on the AI assistant', 'aistudio.google.com/apikey');
+await askOnce('ELEVENLABS_API_KEY', 'an ElevenLabs API key so the assistant reads replies aloud', 'elevenlabs.io → Developers → API Keys');
 await client.connect();
 const db = client.db(process.env.MONGODB_DB || 'autolarp');
 const users = db.collection('users');
@@ -266,6 +268,7 @@ app.delete('/api/data', requireUser, route(async (req, res) => {
 }));
 
 assistantRoutes(app, { requireUser, cars });
+ttsRoutes(app, { requireUser });
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 app.use(express.static(path.join(ROOT, 'public'), { extensions: ['html'] }));

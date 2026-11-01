@@ -30,3 +30,11 @@ set `GEMINI_MODEL` to change it).
 Add a Gemini API key (aistudio.google.com/apikey) as `GEMINI_API_KEY` in `.env`
 (`npm start` offers to save it the first time) or in Render's Environment settings.
 Without a key the site works normally and the chat says the assistant isn't set up.
+
+### Voice replies (optional)
+
+The assistant can read its replies aloud with ElevenLabs (🔊 button in the chat header to mute).
+Add `ELEVENLABS_API_KEY` (elevenlabs.io → Developers → API Keys) to `.env` or Render's Environment.
+Uses the `eleven_flash_v2_5` model and the default "George" voice; override with
+`ELEVENLABS_MODEL` / `ELEVENLABS_VOICE_ID`.
+

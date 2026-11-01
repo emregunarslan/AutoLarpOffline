@@ -941,3 +941,7 @@ body:has(.chat-fab) .app { padding-bottom: calc(var(--safe-bottom) + 100px); }
 }
 .amex-black .pay-number { color: #e2e2e5; letter-spacing: 3px; }
 .amex-black .pay-bottom { color: #b9b9be; font-size: 13px; }
+.chat-head-actions { display: flex; gap: 8px; }
+.chat-voice { width: 36px; height: 36px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; color: var(--muted); }
+.chat-voice svg { width: 18px; height: 18px; }
+.chat-voice.on { color: var(--accent); }
