@@ -11,6 +11,8 @@
   <link rel="icon" href="icons/icon.svg">
   <title>Account</title>
   <link rel="stylesheet" href="css/styles.css">
+  <script src="js/skins.js"></script>
+  <style id="themePhotoCss"></style>
 </head>
 <body>
   <main class="app">
@@ -24,6 +26,18 @@
 
     <div class="section-label">Vehicles</div>
     <div class="group" id="vehicles"></div>
+
+    <div class="section-label">Customize</div>
+    <div class="group">
+      <button class="row" id="themesRow">
+        <span class="ico" id="themesIco"></span>
+        <div class="txt">
+          <div class="t"><span>Themes</span></div>
+          <div class="s" id="themesSub">Midnight</div>
+        </div>
+        <span class="chev" id="themesChev"></span>
+      </button>
+    </div>
 
     <div class="section-label">Account</div>
     <div class="group" id="extras"></div>
@@ -73,6 +87,20 @@
       <button class="btn" type="submit" id="save">Save</button>
       <button class="btn ghost-danger" type="button" id="remove" hidden>Remove Vehicle</button>
     </form>
+  </section>
+
+  <div class="theme-backdrop" id="themeBackdrop"></div>
+  <section class="theme-sheet" id="themeSheet" aria-modal="true" role="dialog" aria-label="Themes">
+    <div class="sheet-head">
+      <button class="cancel" id="themeClose">Cancel</button>
+      <h2>Themes</h2>
+      <span></span>
+    </div>
+    <div class="theme-body">
+      <div class="theme-chips" id="themeChips"></div>
+      <div class="theme-grid" id="themeGrid"></div>
+      <p class="theme-hint">Tap a theme to apply it to your garage.</p>
+    </div>
   </section>
 
   <script src="js/db.js"></script>
