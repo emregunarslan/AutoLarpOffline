@@ -40,12 +40,13 @@ const Subpages = (() => {
     payment: {
       title: 'Payment Methods',
       render: ({ name }) => `
-        <div class="pay-card">
-          <div class="pay-top"><span>Primary</span><b>VISA</b></div>
-          <div class="pay-number">•••• •••• •••• 4821</div>
-          <div class="pay-bottom"><span>${escapeHtml(name)}</span><span>09/29</span></div>
+        <div class="pay-card amex-black">
+          <div class="pay-top"><span>American Express</span><b>AMEX</b></div>
+          <div class="pay-chip"></div>
+          <div class="pay-number">•••• •••••• •1005</div>
+          <div class="pay-bottom"><span>${escapeHtml(name)}</span><span>11/30</span></div>
         </div>
-        ${group('Cards', row('card', 'Visa ending 4821', 'Default · Expires 09/29', { chev: false, extra: '<span class="pill">Default</span>' }) +
+        ${group('Cards', row('card', 'Amex Black ending 1005', 'Default · Expires 11/30', { chev: false, extra: '<span class="pill">Default</span>' }) +
           row('plus', 'Add Payment Method', '', { action: 'addCard' }))}
         ${group('Billing', row('location', 'Billing Address', escapeHtml(DEFAULT_LOCATION), { action: 'autopay' }) +
           toggle('autopay', 'Auto-pay', 'Charging, fuel and service charges', true))}`,

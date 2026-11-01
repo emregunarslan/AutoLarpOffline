@@ -122,6 +122,36 @@
     <button type="button" class="swatch" data-color="${preset.hex}" data-name="${escapeHtml(preset.name)}" style="--swatch:${preset.hex}"
       title="${escapeHtml(preset.name)}" aria-label="${escapeHtml(preset.name)} ${preset.hex.toUpperCase()}" aria-pressed="false"></button>`).join(''));
 
+  // One-tap themes: each sets both gradient colours at once.
+  const THEME_PRESETS = [
+    { name: 'Midnight', primary: '#1f3a68', secondary: '#c6a664' },
+    { name: 'Rosso Corsa', primary: '#c1121f', secondary: '#c6a664' },
+    { name: 'British Racing', primary: '#1c4b3b', secondary: '#c6a664' },
+    { name: 'Obsidian', primary: '#0d0d10', secondary: '#b9bdc4' },
+    { name: 'Bordeaux', primary: '#7b1e2b', secondary: '#8a5a2b' },
+    { name: 'Arctic', primary: '#b9bdc4', secondary: '#1f3a68' },
+    { name: 'Cognac', primary: '#8a5a2b', secondary: '#f2efe9' },
+    { name: 'Monaco', primary: '#1f3a68', secondary: '#c1121f' },
+    { name: 'Emerald Night', primary: '#0d0d10', secondary: '#1c4b3b' },
+    { name: 'Pearl', primary: '#f2efe9', secondary: '#c6a664' },
+  ];
+  $('themePresets').innerHTML = THEME_PRESETS.map((t) => `
+    <button type="button" class="swatch" data-primary="${t.primary}" data-secondary="${t.secondary}" data-name="${escapeHtml(t.name)}"
+      style="--swatch:linear-gradient(135deg, ${t.primary} 50%, ${t.secondary} 50%)"
+      title="${escapeHtml(t.name)}" aria-label="${escapeHtml(t.name)} theme" aria-pressed="false"></button>`).join('');
+
+  function renderPresetSelection() {
+    let note = '';
+    $('themePresets').querySelectorAll('[data-primary]').forEach((swatch) => {
+      const on = swatch.dataset.primary === draft.primary.toLowerCase()
+        && swatch.dataset.secondary === draft.secondary.toLowerCase();
+      swatch.classList.toggle('sel', on);
+      swatch.setAttribute('aria-pressed', String(on));
+      if (on) note = swatch.dataset.name;
+    });
+    $('presetNote').textContent = note;
+  }
+
   function colorSubtitle(colors) {
     return `${colors.primary.toUpperCase()} · ${colors.secondary.toUpperCase()}`;
   }
@@ -135,12 +165,12 @@
   function previewCars() {
     if (cars.length) {
       return cars.slice(0, 2).map((c) => {
-        const { km, fuelBand } = vehicleStats(c);
+        const { km, fuel } = vehicleStats(c);
         return {
           title: c.title,
           sub: c.description || brandBySlug(c.brand).name,
           photo: c.photo,
-          stat: km === null ? `${fuelBand[0]}%` : `${km}km`,
+          stat: km === null ? `${fuel}%` : `${km}km`,
         };
       });
     }
@@ -206,6 +236,7 @@
     $('secondaryHex').textContent = draft.secondary.toUpperCase();
     renderTargets();
     renderPaletteSelection();
+    renderPresetSelection();
   }
 
   function setPickerFromColor(hex) {
@@ -237,6 +268,8 @@
 
   function openCustomPicker() {
     setPickerFromColor(draft[activeTarget]);
+    $('presetHead').hidden = true;
+    $('themePresets').hidden = true;
     $('paletteHead').hidden = true;
     $('palette').hidden = true;
     $('themeHint').hidden = true;
@@ -249,6 +282,8 @@
 
   function closeCustomPicker() {
     $('customPicker').hidden = true;
+    $('presetHead').hidden = false;
+    $('themePresets').hidden = false;
     $('paletteHead').hidden = false;
     $('palette').hidden = false;
     $('themeHint').hidden = false;
@@ -285,6 +320,13 @@
     const swatch = e.target.closest('[data-color]');
     if (!swatch) return;
     draft = { ...draft, [activeTarget]: swatch.dataset.color };
+    paintPreview();
+  });
+
+  $('themePresets').addEventListener('click', (e) => {
+    const swatch = e.target.closest('[data-primary]');
+    if (!swatch) return;
+    draft = { primary: swatch.dataset.primary, secondary: swatch.dataset.secondary };
     paintPreview();
   });
 

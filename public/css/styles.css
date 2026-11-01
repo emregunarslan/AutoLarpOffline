@@ -919,3 +919,25 @@ body:has(.chat-fab) .app { padding-bottom: calc(var(--safe-bottom) + 100px); }
 .pay-number { font-size: 21px; letter-spacing: 2px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .pay-bottom { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: #d6d8de; }
 .subpage-toast { white-space: normal; width: max-content; max-width: calc(100% - 40px); text-align: center; border-radius: 18px; line-height: 1.35; }
+
+/* Black Amex look for the saved card */
+.pay-card.amex-black {
+  background:
+    linear-gradient(115deg, transparent 35%, rgba(255,255,255,.07) 48%, transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 2px, transparent 2px 4px),
+    linear-gradient(145deg, #2a2a2c, #0b0b0c 60%, #161617);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #d9d9dc;
+}
+.amex-black .pay-top span { color: #a9a9ad; letter-spacing: 1.5px; text-transform: uppercase; font-size: 12px; }
+.amex-black .pay-top b {
+  font-style: normal; font-size: 15px; letter-spacing: 2px; color: #e8e8ea;
+  border: 1.5px solid #c9c9cc; border-radius: 4px; padding: 3px 8px;
+}
+.pay-chip {
+  width: 44px; height: 33px; border-radius: 6px; margin-top: -6px;
+  background: linear-gradient(135deg, #d9d9dc, #8e8e93 55%, #c4c4c8);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+}
+.amex-black .pay-number { color: #e2e2e5; letter-spacing: 3px; }
+.amex-black .pay-bottom { color: #b9b9be; font-size: 13px; }
