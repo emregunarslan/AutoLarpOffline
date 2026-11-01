@@ -9,6 +9,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { assistantRoutes } from './assistant.js';
 import { ttsRoutes } from './tts.js';
+import { geocodeRoutes } from './geocode.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const ENV_FILE = path.join(ROOT, '.env');
@@ -116,12 +117,19 @@ const BRANDS = new Set(['tesla', 'porsche', 'ferrari', 'lamborghini', 'mclaren',
   'jeep', 'nissan', 'hyundai', 'kia', 'mazda', 'subaru', 'volkswagen']);
 
 // Returns a clean car object, or a string describing what's wrong.
+// GPS position from "Use my current location", or null.
+function validCoords(c) {
+  const lat = Number(c?.lat), lon = Number(c?.lon);
+  return c && Math.abs(lat) <= 90 && Math.abs(lon) <= 180 ? { lat: +lat.toFixed(6), lon: +lon.toFixed(6) } : null;
+}
+
 function validateCar(body) {
   const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
   const car = {
     title: str(body.title, 40),
     description: str(body.description, 140),
     location: str(body.location, 80),
+    coords: validCoords(body.coords),
     brand: str(body.brand, 30),
     powertrain: body.powertrain === 'gas' ? 'gas' : 'electric',
     bodyType: ['sedan', 'suv', 'truck'].includes(body.bodyType) ? body.bodyType : null,
@@ -269,6 +277,7 @@ app.delete('/api/data', requireUser, route(async (req, res) => {
 
 assistantRoutes(app, { requireUser, cars });
 ttsRoutes(app, { requireUser });
+geocodeRoutes(app, { requireUser });
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 app.use(express.static(path.join(ROOT, 'public'), { extensions: ['html'] }));

@@ -85,7 +85,9 @@
 
       <div class="field-label">Location<span class="req">*</span></div>
       <input class="input with-suggest" id="location" maxlength="80" placeholder="Where is it parked?">
-      <button type="button" class="suggest" id="suggestLoc"></button>
+      <div class="suggest-row">
+        <button type="button" class="suggest" id="trackLoc"></button>
+      </div>
 
       <div class="form-error" id="formError"></div>
       <button class="btn" type="submit" id="save">Save</button>
@@ -166,7 +168,6 @@
 
   <script src="js/db.js"></script>    <script src="js/brands.js"></script>
     <script src="js/icons.js"></script>
-    <script src="js/fullscreen.js"></script>
     <script src="js/cropper.js"></script>
   <script src="js/subpages.js"></script>
   <script src="js/profile.js"></script>

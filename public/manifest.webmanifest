@@ -1,6 +1,6 @@
 {
-  "name": "Garage",
-  "short_name": "Garage",
+  "name": "AutoLarp",
+  "short_name": "AutoLarp",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#17181b",

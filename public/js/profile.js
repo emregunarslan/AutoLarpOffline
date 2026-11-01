@@ -403,7 +403,7 @@
   };
 
   // ---------- Add / edit sheet ----------
-  const state = { id: null, photo: null, brand: null, powertrain: 'electric', bodyType: null };
+  const state = { id: null, photo: null, brand: null, powertrain: 'electric', bodyType: null, coords: null };
 
   $('bodyType').innerHTML = Object.entries(BODY_TYPES)
     .map(([v, label]) => `<button type="button" class="chip" data-v="${v}">${label}</button>`).join('');
@@ -418,10 +418,37 @@
     $('bodyType').querySelectorAll('[data-v]').forEach((b) => b.classList.toggle('sel', b.dataset.v === state.bodyType));
   }
 
-  // Any text is accepted as a location; this just offers the default as a one-tap fill.
-  $('suggestLoc').innerHTML = `${ICONS.location}<span>Use ${escapeHtml(DEFAULT_LOCATION)}</span>`;
-  $('suggestLoc').onclick = () => { $('location').value = DEFAULT_LOCATION; validate(); };
-  $('location').addEventListener('input', validate);
+  // Any text is accepted as a location.
+  $('location').addEventListener('input', () => { state.coords = null; validate(); }); // typed by hand: no GPS
+
+  // "Use my current location": GPS position -> street address (looked up by the server).
+  const TRACK_LABEL = `${ICONS.location}<span>Use my current location</span>`;
+  $('trackLoc').innerHTML = TRACK_LABEL;
+  $('trackLoc').onclick = () => {
+    if (!navigator.geolocation) {
+      $('formError').textContent = 'Location isn\'t available in this browser.';
+      return;
+    }
+    $('trackLoc').disabled = true;
+    $('trackLoc').innerHTML = `${ICONS.location}<span>Finding you…</span>`;
+    const done = () => { $('trackLoc').disabled = false; $('trackLoc').innerHTML = TRACK_LABEL; };
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      const lat = coords.latitude, lon = coords.longitude;
+      let address = `${lat.toFixed(5)}, ${lon.toFixed(5)}`; // shown if the address lookup fails
+      try {
+        address = (await DB.api('GET', `/geocode?lat=${lat}&lon=${lon}`)).address || address;
+      } catch { /* keep the coordinates */ }
+      $('location').value = address;
+      state.coords = { lat, lon };
+      validate();
+      done();
+    }, (err) => {
+      $('formError').textContent = err.code === err.PERMISSION_DENIED
+        ? 'Location access is blocked. Allow it in your browser\'s site settings, or type the address.'
+        : 'Couldn\'t get your location. Try again or type the address.';
+      done();
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+  };
 
   $('powertrain').addEventListener('click', (e) => {
     const seg = e.target.closest('[data-v]');
@@ -478,6 +505,7 @@
     $('title').value = car ? car.title : '';
     $('desc').value = car ? car.description || '' : '';
     $('location').value = car ? car.location || '' : '';
+    state.coords = car?.coords || null;
     state.bodyType = car && BODY_TYPES[car.bodyType] ? car.bodyType : null;
     syncBodyType();
     state.powertrain = car ? powertrainOf(car) : 'electric';
@@ -531,6 +559,7 @@
         title: $('title').value.trim(),
         description: $('desc').value.trim(),
         location: $('location').value.trim(),
+        coords: state.coords,
         powertrain: state.powertrain,
         bodyType: state.bodyType,
         brand: state.brand,

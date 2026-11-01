@@ -913,7 +913,7 @@ body:has(.chat-fab) .app { padding-bottom: calc(var(--safe-bottom) + 100px); }
   box-shadow: 0 16px 40px rgba(0,0,0,.45);
 }
 .pay-card.platinum {
-  background: #dfe1e4 url('amexplat.png') center/cover no-repeat;
+  background: #dfe1e4 url('../amexplat.png') center/cover no-repeat;
   border: 1px solid rgba(255,255,255,.5);
 }
 /* The user's name printed on the card's bottom-left, like a real embossed cardholder */
@@ -937,3 +937,6 @@ body:has(.chat-fab) .app { padding-bottom: calc(var(--safe-bottom) + 100px); }
   border: 2px solid var(--accent); animation: mic-pulse 1.2s ease-out infinite;
 }
 @keyframes mic-pulse { from { opacity: .9; transform: scale(.9); } to { opacity: 0; transform: scale(1.35); } }
+.suggest-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px 2px; }
+.suggest-row .suggest { margin: 0; }
+.suggest:disabled { opacity: .6; }
