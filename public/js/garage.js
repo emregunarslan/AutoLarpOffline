@@ -12,6 +12,11 @@
     return;
   }
 
+  const garageValue = document.getElementById('garageValue');
+  const total = cars.reduce((sum, car) => sum + carValue(car), 0);
+  garageValue.innerHTML = `Garage value <b>${formatCAD(total, { compact: true })}</b>`;
+  garageValue.hidden = false;
+
   list.innerHTML = cars.map((car, i) => {
     const { pct, km, fuel } = vehicleStats(car);
     const electric = powertrainOf(car) === 'electric';

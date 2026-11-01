@@ -28,9 +28,10 @@
   const headline = type === 'electric'
     ? { icon: battery(pct), label: 'Estimated range', value: `${km} km` }
     : { icon: `<span class="gauge-ico">${ICONS.fuel}</span>`, label: 'Estimated fuel', value: `${fuel}%` };
-  const ROWS = type === 'electric'
-    ? [['Battery', `${pct}%`], ['Charge target', '80%']]
-    : [['Oil life', `${oil}%`]];
+  const ROWS = [
+    ...(type === 'electric' ? [['Battery', `${pct}%`], ['Charge target', '80%']] : [['Oil life', `${oil}%`]]),
+    ['Estimated value', formatCAD(carValue(car))],
+  ];
   const row = (label, value, id = '') => `<div class="srow"><span>${label}</span><b${id ? ` id="${id}"` : ''}>${value}</b></div>`;
 
   const tire = (label, val) => `<div class="tire ${label.endsWith('Left') ? 'left' : 'right'}"><div class="v">${val}<small>psi</small></div><div class="l">${label}</div></div>`;

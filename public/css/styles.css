@@ -932,3 +932,5 @@ body:has(.chat-fab) .app { padding-bottom: calc(var(--safe-bottom) + 100px); }
 .suggest-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px 2px; }
 .suggest-row .suggest { margin: 0; }
 .suggest:disabled { opacity: .6; }
+.garage-value { margin: -12px 2px 18px; font-size: 14px; font-weight: 500; color: var(--muted); letter-spacing: .2px; }
+.garage-value b { color: var(--text); font-weight: 700; margin-left: 4px; }
