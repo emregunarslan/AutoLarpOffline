@@ -64,6 +64,7 @@
   $('extras').innerHTML = [
     ['payment', 'card', 'Payment Methods'],
     ['notifications', 'bell', 'Notifications'],
+    ['preferences', 'speaker', 'Preferences'],
     ['privacy', 'shield', 'Privacy & Security'],
     ['support', 'help', 'Support'],
   ].map(([page, icon, label]) => `

@@ -132,6 +132,7 @@
       toast(onText);
       return;
     }
+    window.SFX?.play(k, on);
     show(btn, k, on);
     toast(on ? onText : offText);
     state[k] = on;

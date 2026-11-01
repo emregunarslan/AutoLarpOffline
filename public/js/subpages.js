@@ -58,6 +58,11 @@ const Subpages = (() => {
         ${group('Account', toggle('n_updates', 'Software Updates', 'When a new update is ready to install', true) +
           toggle('n_offers', 'News & Offers', 'Events, accessories and promotions', false))}`,
     },
+    preferences: {
+      title: 'Preferences',
+      render: () => `
+        ${group('Sound', toggle('sfx', 'Sound Effects', 'Confirmation sounds for vehicle controls', true))}`,
+    },
     privacy: {
       title: 'Privacy & Security',
       render: () => `
