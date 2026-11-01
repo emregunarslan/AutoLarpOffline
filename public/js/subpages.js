@@ -1,4 +1,4 @@
-// Account screens (Payment Methods, Keys & Drivers, ...). They look real but are
+// Account screens (Payment Methods, Notifications, ...). They look real but are
 // for show: switches remember their position on this device, and actions just
 // confirm with a message.
 const Subpages = (() => {
@@ -26,8 +26,6 @@ const Subpages = (() => {
   const ACTIONS = {
     addCard: 'Card scanner isn\'t available right now. Please try again later.',
     autopay: 'Auto-pay settings saved.',
-    addDriver: 'Invite sent. They\'ll get access once they accept.',
-    addKey: 'Hold the new key card against the centre console to pair it.',
     password: 'A password reset link has been sent to your email.',
     devices: 'You\'re only signed in on this device.',
     download: 'We\'re preparing your data. You\'ll get an email when it\'s ready.',
@@ -51,18 +49,6 @@ const Subpages = (() => {
           row('plus', 'Add Payment Method', '', { action: 'addCard' }))}
         ${group('Billing', row('location', 'Billing Address', escapeHtml(DEFAULT_LOCATION), { action: 'autopay' }) +
           toggle('autopay', 'Auto-pay', 'Charging, fuel and service charges', true))}`,
-    },
-    keys: {
-      title: 'Keys & Drivers',
-      render: ({ name }) => `
-        ${group('Keys', row('key', 'Phone Key', `${dot}This device · Active`, { chev: false }) +
-          row('card', 'Key Card', 'Paired', { chev: false }) +
-          row('card', 'Key Card', 'Paired', { chev: false }) +
-          row('plus', 'Add Key', '', { action: 'addKey' }))}
-        ${group('Drivers', row('user', escapeHtml(name), 'Owner · Full access', { chev: false }) +
-          row('plus', 'Add Driver', 'Share access with family or friends', { action: 'addDriver' }))}
-        ${group('', toggle('walkaway', 'Walk-Away Lock', 'Lock automatically when you walk away', true) +
-          toggle('approach', 'Unlock on Approach', 'Unlock when your phone key is nearby', true))}`,
     },
     notifications: {
       title: 'Notifications',

@@ -63,7 +63,6 @@
   // ---------- Account rows (each opens a screen from subpages.js) ----------
   $('extras').innerHTML = [
     ['payment', 'card', 'Payment Methods'],
-    ['keys', 'key', 'Keys & Drivers'],
     ['notifications', 'bell', 'Notifications'],
     ['privacy', 'shield', 'Privacy & Security'],
     ['support', 'help', 'Support'],
