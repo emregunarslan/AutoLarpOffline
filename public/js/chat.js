@@ -81,6 +81,7 @@
     <div class="chat-log" aria-live="polite"></div>
     <div class="chat-suggest"></div>
     <form class="chat-form" autocomplete="off">
+      <button class="chat-mic" type="button" aria-label="Speak to the assistant" hidden>${ICONS.mic}</button>
       <input class="chat-input" maxlength="500" placeholder="Ask or give a command…" aria-label="Message">
       <button class="chat-send" type="submit" aria-label="Send">${ICONS.send}</button>
     </form>`;
@@ -141,6 +142,10 @@
   }
   function close() {
     stopVoice();
+    if (recognizer) {
+      recognizer.cancelled = true; // closing the chat discards what was being said
+      recognizer.abort();
+    }
     document.body.classList.remove('chat-open');
   }
 
@@ -197,6 +202,62 @@
     } finally {
       busy = false;
     }
+  }
+
+  // ---------- Talking to the assistant (browser speech recognition) ----------
+  // Tap the mic, speak, and the words appear as you talk; when you stop, the
+  // message is sent. Hidden in browsers without speech recognition (e.g. Firefox).
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micBtn = panel.querySelector('.chat-mic');
+  const PLACEHOLDER = input.placeholder;
+  let recognizer = null;
+
+  function setListening(on) {
+    micBtn.classList.toggle('listening', on);
+    micBtn.setAttribute('aria-pressed', String(on));
+    micBtn.setAttribute('aria-label', on ? 'Stop listening' : 'Speak to the assistant');
+    input.placeholder = on ? 'Listening…' : PLACEHOLDER;
+  }
+
+  function startListening() {
+    if (busy) return;
+    unlockAudio(); // this tap also allows the spoken reply to play
+    stopVoice();
+    let heard = '';
+    const rec = new Recognition();
+    recognizer = rec;
+    rec.lang = navigator.language || 'en-US';
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) heard += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      input.value = `${heard}${interim}`.trim();
+    };
+    rec.onerror = (e) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        bubble({ role: 'assistant', content: 'Microphone access is blocked. Allow it in your browser\'s site settings to talk to me.', error: true });
+      } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
+        console.warn('Speech recognition error:', e.error);
+      }
+    };
+    rec.onend = () => {
+      recognizer = null;
+      setListening(false);
+      const text = (heard || input.value).trim();
+      if (text && !rec.cancelled) send(text);
+    };
+    input.value = '';
+    setListening(true);
+    rec.start();
+  }
+
+  if (Recognition) {
+    micBtn.hidden = false;
+    micBtn.onclick = () => (recognizer ? recognizer.stop() : startListening());
   }
 
   fab.onclick = open;

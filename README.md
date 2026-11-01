@@ -38,3 +38,9 @@ Add `ELEVENLABS_API_KEY` (elevenlabs.io → Developers → API Keys) to `.env` o
 Uses the `eleven_flash_v2_5` model and the default "George" voice; override with
 `ELEVENLABS_MODEL` / `ELEVENLABS_VOICE_ID`.
 
+
+### Talking to the assistant
+
+Tap the 🎤 button in the chat and speak; your words appear as you talk and are sent when you stop.
+Uses the browser's built-in speech recognition (Chrome, Edge, Safari/iPhone, Android) — no key needed.
+The button is hidden in browsers without it (e.g. Firefox). Needs https or localhost.

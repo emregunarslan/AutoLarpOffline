@@ -945,3 +945,11 @@ body:has(.chat-fab) .app { padding-bottom: calc(var(--safe-bottom) + 100px); }
 .chat-voice { width: 36px; height: 36px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; color: var(--muted); }
 .chat-voice svg { width: 18px; height: 18px; }
 .chat-voice.on { color: var(--accent); }
+.chat-mic { width: 44px; height: 44px; border-radius: 50%; background: var(--surface); color: #c7c7cc; display: grid; place-items: center; flex: none; position: relative; }
+.chat-mic svg { width: 20px; height: 20px; }
+.chat-mic.listening { background: var(--accent); color: #fff; }
+.chat-mic.listening::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%;
+  border: 2px solid var(--accent); animation: mic-pulse 1.2s ease-out infinite;
+}
+@keyframes mic-pulse { from { opacity: .9; transform: scale(.9); } to { opacity: 0; transform: scale(1.35); } }

@@ -116,21 +116,25 @@ function replyText(response) {
 
 export function assistantRoutes(app, { requireUser, cars }) {
   let ai = null;
-  // Minimal thinking keeps replies fast; turned off automatically if the model rejects it.
-  let fastThinking = true;
+  // Less thinking = faster replies. Newer Gemini models take thinkingLevel, older
+  // Flash models take thinkingBudget (0 = off). Try each once; the first one the
+  // model accepts is remembered, otherwise fall back to the model's default.
+  const SPEED_OPTIONS = [{ thinkingLevel: 'MINIMAL' }, { thinkingBudget: 0 }, null];
+  let speedOption = 0;
 
   async function generate(contents, system) {
     const config = { systemInstruction: system, tools: [{ functionDeclarations: [CONTROL_TOOL] }] };
-    if (!fastThinking) return ai.models.generateContent({ model: MODEL, contents, config });
-    try {
-      return await ai.models.generateContent({
-        model: MODEL, contents, config: { ...config, thinkingConfig: { thinkingLevel: 'MINIMAL' } },
-      });
-    } catch (err) {
-      if (!(err instanceof ApiError) || err.status !== 400) throw err;
-      fastThinking = false;
-      console.warn(`${MODEL} rejected thinkingLevel MINIMAL; using its default thinking.`);
-      return ai.models.generateContent({ model: MODEL, contents, config });
+    for (;;) {
+      const thinkingConfig = SPEED_OPTIONS[speedOption];
+      try {
+        return await ai.models.generateContent({
+          model: MODEL, contents, config: thinkingConfig ? { ...config, thinkingConfig } : config,
+        });
+      } catch (err) {
+        if (!thinkingConfig || !(err instanceof ApiError) || err.status !== 400) throw err;
+        console.warn(`${MODEL} rejected ${JSON.stringify(thinkingConfig)}: ${err.message.slice(0, 200)}`);
+        speedOption++;
+      }
     }
   }
 
