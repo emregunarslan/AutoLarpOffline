@@ -109,6 +109,11 @@ function replyText(response) {
   return parts.filter((part) => part.text && !part.thought).map((part) => part.text).join('').trim();
 }
 
+// "Lock my car", "lock my cars", "Lock all my cars." etc. (case and punctuation ignored).
+const LOCK_ALL = /^(please )?lock (all )?(of )?(my|the|all) cars?( please)?$/;
+const LOCK_ALL_DELAY_MS = 10000;
+const normalize = (text) => text.toLowerCase().replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
+
 export function assistantRoutes(app, { requireUser, cars }) {
   let ai = null;
   // Less thinking = faster replies. Newer Gemini models take thinkingLevel, older
@@ -137,6 +142,21 @@ export function assistantRoutes(app, { requireUser, cars }) {
     try {
       const history = cleanHistory(req.body.messages);
       if (!history) return res.status(400).json({ error: 'Send a message' });
+
+      const garage = await cars.find({ userId: req.user._id }, { projection: { photo: 0 } })
+        .sort({ createdAt: 1 }).toArray();
+
+      // Hard-coded shortcut: "lock my car" locks every car instantly, without calling Gemini.
+      if (LOCK_ALL.test(normalize(history.at(-1).content))) {
+        if (!garage.length) return res.json({ reply: 'You don\'t have any cars to lock yet.', actions: [] });
+        const actions = garage.map((car) => ({
+          vehicleId: car.id, vehicle: car.title, control: 'lock', label: 'Lock', on: true, oneShot: false, text: 'Locked',
+        }));
+        // Wait so it looks like the cars are really being locked (the chat shows its typing dots meanwhile).
+        await new Promise((resolve) => setTimeout(resolve, LOCK_ALL_DELAY_MS));
+        return res.json({ reply: 'All cars locked.', actions });
+      }
+
       if (!process.env.GEMINI_API_KEY) {
         return res.status(503).json({ error: 'The assistant isn\'t set up yet (no GEMINI_API_KEY on the server).' });
       }
@@ -145,8 +165,6 @@ export function assistantRoutes(app, { requireUser, cars }) {
       }
       ai ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-      const garage = await cars.find({ userId: req.user._id }, { projection: { photo: 0 } })
-        .sort({ createdAt: 1 }).toArray();
       const byId = new Map(garage.map((c) => [c.id, c]));
       const stats = req.body.stats && typeof req.body.stats === 'object' ? req.body.stats : {};
       const currentId = byId.has(req.body.currentVehicleId) ? req.body.currentVehicleId : null;
