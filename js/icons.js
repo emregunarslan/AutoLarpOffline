@@ -16,7 +16,6 @@ const ICONS = {
   key: svg('<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/>'),
   help: svg('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 0c0 2-2.5 2-2.5 4M12 17h.01"/>'),
   palette: svg('<path d="M12 3a9 9 0 100 18c1.2 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.7 1.8-1.7H16a5 5 0 005-5c0-4-4-7.2-9-7.2z"/><circle cx="7.8" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="6.8" r="1" fill="currentColor" stroke="none"/><circle cx="14.2" cy="6.6" r="1" fill="currentColor" stroke="none"/>'),
-  check: svg('<path d="M4.5 12.5l5 5 10-11"/>'),
 
   // controls
   lock: svg('<rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor" stroke="none"/><path d="M8 11V8a4 4 0 018 0v3"/>'),

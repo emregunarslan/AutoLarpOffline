@@ -57,15 +57,17 @@
     openSheet(row.id === 'addRow' ? null : cars.find((c) => c.id === row.dataset.id));
   });
 
-  // ---------- Appearance themes ----------
+  // ---------- Custom gradient ----------
   $('themesIco').innerHTML = ICONS.palette;
   $('themesChev').innerHTML = ICONS.chev;
-  $('themesSub').textContent = skinById(getSkinId()).name;
 
-  const THEME_FILTERS = [['all', 'All Themes'], ['dark', 'Dark'], ['light', 'Light']];
-  let themeFilter = 'all';
+  function colorSubtitle(colors) {
+    return `${colors.primary.toUpperCase()} · ${colors.secondary.toUpperCase()}`;
+  }
+  $('themesSub').textContent = colorSubtitle(getColors());
+  let draft = getColors();
 
-  // Samples keep the previews looking like a garage even before a car is added.
+  // Samples keep the preview looking like a garage even before a car is added.
   function previewCars() {
     if (cars.length) {
       return cars.slice(0, 2).map((c) => {
@@ -84,89 +86,61 @@
     ];
   }
 
-  // A miniature of the real homepage. Car photos go through one shared CSS
-  // rule so the same image data isn't repeated in all six previews.
+  // A miniature of the real homepage, rebuilt whenever the sheet opens.
   function miniHome() {
     const named = profile.name && profile.name !== 'Owner';
     const greeting = named ? `Hello ${escapeHtml(profile.name.split(' ')[0])}` : 'Hello';
     const avatar = named ? escapeHtml(initials(profile.name)) : ICONS.user;
-    const cards = previewCars();
-    const photoCss = cards.map((c, i) => c.photo ? `.mini-photo-${i} { background-image: url('${c.photo}'); }` : '').join('\n');
-    const cardsHtml = cards.map((c, i) => `
-      <div class="mini-card${c.photo ? ` photo mini-photo-${i}` : ''}">
+    const cards = previewCars().map((c) => `
+      <div class="mini-card${c.photo ? ' photo' : ''}"${c.photo ? ` style="background-image:url('${c.photo}')"` : ''}>
         <div class="mini-inner">
           <div class="mini-title">${escapeHtml(c.title)}</div>
           <div class="mini-stat">${escapeHtml(c.stat)}</div>
           <div class="mini-sub">${escapeHtml(c.sub)}</div>
         </div>
       </div>`).join('');
-    return {
-      photoCss,
-      html: `
+    return `
       <div class="mini-status"><span>9:41</span><span class="mini-sig"><i></i><i></i><i></i><b></b></span></div>
       <div class="mini-head"><div class="mini-greeting">${greeting}</div><div class="mini-avatar">${avatar}</div></div>
-      <div class="mini-list">${cardsHtml}</div>`,
-    };
+      <div class="mini-list">${cards}</div>`;
   }
 
-  function renderThemeChips() {
-    $('themeChips').innerHTML = THEME_FILTERS.map(([id, label]) =>
-      `<button class="theme-chip${id === themeFilter ? ' sel' : ''}" data-filter="${id}">${label}</button>`).join('');
-  }
-
-  function renderThemeGrid() {
-    const active = getSkinId();
-    const skins = SKINS.filter((s) => themeFilter === 'all' || s.mode === themeFilter);
-    const preview = miniHome();
-    $('themePhotoCss').textContent = preview.photoCss;
-    $('themeGrid').innerHTML = skins.map((skin) => {
-      const vars = Object.entries(skin.vars).map(([k, v]) => `${k}:${v}`).join(';');
-      const on = skin.id === active;
-      return `
-        <button class="theme-card${on ? ' active' : ''}" data-id="${skin.id}" aria-pressed="${on}" aria-label="Apply ${escapeHtml(skin.name)} theme">
-          <div class="mini-frame" style="${vars}"><div class="mini">${preview.html}</div></div>
-          <div class="theme-meta">
-            <div class="theme-info">
-              <div class="theme-name">${escapeHtml(skin.name)}</div>
-              <div class="theme-blurb">${escapeHtml(skin.blurb)}</div>
-            </div>
-            <span class="theme-check">${ICONS.check}</span>
-          </div>
-        </button>`;
-    }).join('');
+  function paintPreview() {
+    const vars = colorVars(draft);
+    const frame = $('themePreviewFrame');
+    Object.entries(vars).forEach(([key, value]) => frame.style.setProperty(key, value));
+    $('gradientStrip').style.background = `linear-gradient(135deg, ${draft.primary}, ${draft.secondary})`;
+    $('primaryColor').value = draft.primary;
+    $('secondaryColor').value = draft.secondary;
+    $('primaryHex').textContent = draft.primary.toUpperCase();
+    $('secondaryHex').textContent = draft.secondary.toUpperCase();
   }
 
   function openThemes() {
-    renderThemeChips();
-    renderThemeGrid();
+    draft = getColors();
+    $('themePreview').innerHTML = miniHome();
+    paintPreview();
     document.body.classList.add('theme-open');
   }
   $('themesRow').onclick = openThemes;
   $('themeClose').onclick = () => document.body.classList.remove('theme-open');
   $('themeBackdrop').onclick = () => document.body.classList.remove('theme-open');
 
-  $('themeChips').addEventListener('click', (e) => {
-    const chip = e.target.closest('[data-filter]');
-    if (!chip) return;
-    themeFilter = chip.dataset.filter;
-    renderThemeChips();
-    renderThemeGrid();
+  $('primaryColor').addEventListener('input', (e) => {
+    draft = { ...draft, primary: e.target.value };
+    paintPreview();
+  });
+  $('secondaryColor').addEventListener('input', (e) => {
+    draft = { ...draft, secondary: e.target.value };
+    paintPreview();
   });
 
-  $('themeGrid').addEventListener('click', (e) => {
-    const card = e.target.closest('.theme-card');
-    if (!card || $('themeGrid').dataset.busy) return;
-    $('themeGrid').dataset.busy = '1';
-    const skin = setSkin(card.dataset.id);
-    $('themesSub').textContent = skin.name;
-    $('themeGrid').querySelectorAll('.theme-card').forEach((c) => {
-      const on = c.dataset.id === skin.id;
-      c.classList.toggle('active', on);
-      c.setAttribute('aria-pressed', String(on));
-    });
-    card.classList.add('applying');
-    setTimeout(() => location.assign('./'), 420);
-  });
+  $('applyTheme').onclick = () => {
+    const saved = saveColors(draft);
+    $('themesSub').textContent = colorSubtitle(saved);
+    document.body.classList.remove('theme-open');
+    location.assign('./');
+  };
 
   // ---------- Add / edit sheet ----------
   const state = { id: null, photo: null, brand: null, powertrain: 'electric', bodyType: null };
@@ -333,7 +307,7 @@
   $('reset').onclick = async () => {
     if (!confirm('Reset all data? This removes every vehicle and your profile from this device.')) return;
     await DB.resetAll();
-    resetSkin();
+    resetColors();
     location.replace('./');
   };
 })();

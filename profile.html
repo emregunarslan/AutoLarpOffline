@@ -12,7 +12,6 @@
   <title>Account</title>
   <link rel="stylesheet" href="css/styles.css">
   <script src="js/skins.js"></script>
-  <style id="themePhotoCss"></style>
 </head>
 <body>
   <main class="app">
@@ -33,7 +32,7 @@
         <span class="ico" id="themesIco"></span>
         <div class="txt">
           <div class="t"><span>Themes</span></div>
-          <div class="s" id="themesSub">Midnight</div>
+          <div class="s" id="themesSub">Custom gradient</div>
         </div>
         <span class="chev" id="themesChev"></span>
       </button>
@@ -97,9 +96,24 @@
       <span></span>
     </div>
     <div class="theme-body">
-      <div class="theme-chips" id="themeChips"></div>
-      <div class="theme-grid" id="themeGrid"></div>
-      <p class="theme-hint">Tap a theme to apply it to your garage.</p>
+      <div class="preview-wrap">
+        <div class="mini-frame preview-frame" id="themePreviewFrame">
+          <div class="mini" id="themePreview"></div>
+        </div>
+      </div>
+      <div class="gradient-strip" id="gradientStrip"></div>
+      <div class="color-list">
+        <label class="color-row">
+          <input class="color-swatch" type="color" id="primaryColor" value="#3e6ae1" aria-label="Primary color">
+          <div class="color-txt"><div class="t">Primary</div><div class="s" id="primaryHex">#3E6AE1</div></div>
+        </label>
+        <label class="color-row">
+          <input class="color-swatch" type="color" id="secondaryColor" value="#8b5cf6" aria-label="Secondary color">
+          <div class="color-txt"><div class="t">Secondary</div><div class="s" id="secondaryHex">#8B5CF6</div></div>
+        </label>
+      </div>
+      <p class="theme-hint">Pick two colors — they blend into your garage gradient.</p>
+      <button class="btn theme-apply" id="applyTheme">Apply Gradient</button>
     </div>
   </section>
 
