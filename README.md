@@ -39,20 +39,11 @@ Uses the `eleven_flash_v2_5` model and the default "George" voice; override with
 `ELEVENLABS_MODEL` / `ELEVENLABS_VOICE_ID`.
 
 
-### Vehicle sound effects
+### Vehicle lock sound
 
-The car page plays confirmation sounds for lock/unlock, engine start/stop, climate,
-the rear opening, and the electric charge port. They are pre-generated with ElevenLabs
-and stored in `public/sfx`, so no API key is needed at runtime. The **Sound Effects**
-switch under Profile → Preferences turns them off on that device.
-
-To regenerate the clips, add `ELEVENLABS_API_KEY` and run:
-
-```
-npm run generate:sfx
-```
-
-Existing clips are kept; `npm run generate:sfx -- --force` regenerates them.
+Locking or unlocking a car from its page plays the bundled key-fob sound in
+`public/sfx/lock.mp3`. The **Sound Effects** switch under Profile → Preferences
+turns it off on that device.
 
 ### Talking to the assistant
 

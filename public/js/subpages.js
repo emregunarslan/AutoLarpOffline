@@ -61,7 +61,7 @@ const Subpages = (() => {
     preferences: {
       title: 'Preferences',
       render: () => `
-        ${group('Sound', toggle('sfx', 'Sound Effects', 'Confirmation sounds for vehicle controls', true))}`,
+        ${group('Sound', toggle('sfx', 'Sound Effects', 'Lock and unlock sounds', true))}`,
     },
     privacy: {
       title: 'Privacy & Security',

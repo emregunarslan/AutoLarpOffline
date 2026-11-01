@@ -3,8 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node --env-file-if-exists=.env server.js",
-    "generate:sfx": "node --env-file-if-exists=.env scripts/generate-sfx.mjs"
+    "start": "node --env-file-if-exists=.env server.js"
   },
   "engines": {
     "node": ">=22"
