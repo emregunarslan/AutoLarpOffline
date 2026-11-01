@@ -111,7 +111,7 @@ function replyText(response) {
 
 // "Lock my car", "lock my cars", "Lock all my cars." etc. (case and punctuation ignored).
 const LOCK_ALL = /^(please )?lock (all )?(of )?(my|the|all) cars?( please)?$/;
-const LOCK_ALL_DELAY_MS = 10000;
+const LOCK_ALL_DELAY_MS = 5000;
 const normalize = (text) => text.toLowerCase().replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
 
 export function assistantRoutes(app, { requireUser, cars }) {
@@ -154,7 +154,7 @@ export function assistantRoutes(app, { requireUser, cars }) {
         }));
         // Wait so it looks like the cars are really being locked (the chat shows its typing dots meanwhile).
         await new Promise((resolve) => setTimeout(resolve, LOCK_ALL_DELAY_MS));
-        return res.json({ reply: 'All cars locked.', actions });
+        return res.json({ reply: 'All of your cars are now locked.', actions });
       }
 
       if (!process.env.GEMINI_API_KEY) {
