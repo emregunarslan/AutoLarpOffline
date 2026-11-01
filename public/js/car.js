@@ -15,6 +15,8 @@
   const theme = brandTheme(car.brand);
   const brandName = brandBySlug(car.brand).name;
   document.body.style.setProperty('--accent', theme.accent);
+  // Brand colours always take white control labels, whatever the theme's accent is.
+  document.body.style.setProperty('--accent-text', '#ffffff');
 
   // Buttons that move something physical lock out briefly after each press.
   const COOLDOWN_MS = 4000;

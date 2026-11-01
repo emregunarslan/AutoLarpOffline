@@ -11,6 +11,7 @@
   <link rel="icon" href="icons/icon.svg">
   <title>Account</title>
   <link rel="stylesheet" href="css/styles.css">
+  <script src="js/skins.js"></script>
 </head>
 <body>
   <main class="app">
@@ -28,6 +29,18 @@
 
     <div class="section-label">Vehicles</div>
     <div class="group" id="vehicles"></div>
+
+    <div class="section-label">Customize</div>
+    <div class="group">
+      <button class="row" id="themesRow">
+        <span class="ico" id="themesIco"></span>
+        <div class="txt">
+          <div class="t"><span>Themes</span></div>
+          <div class="s" id="themesSub">Custom gradient</div>
+        </div>
+        <span class="chev" id="themesChev"></span>
+      </button>
+    </div>
 
     <div class="section-label">Account</div>
     <div class="group" id="extras"></div>
@@ -78,6 +91,71 @@
       <button class="btn" type="submit" id="save">Save</button>
       <button class="btn ghost-danger" type="button" id="remove" hidden>Remove Vehicle</button>
     </form>
+  </section>
+
+  <div class="theme-backdrop" id="themeBackdrop"></div>
+  <section class="theme-sheet" id="themeSheet" aria-modal="true" role="dialog" aria-label="Themes">
+    <div class="sheet-head">
+      <button class="cancel" id="themeClose">Cancel</button>
+      <h2>Themes</h2>
+      <span></span>
+    </div>
+    <div class="theme-body">
+      <div class="preview-wrap">
+        <div class="mini-frame preview-frame" id="themePreviewFrame">
+          <div class="mini" id="themePreview"></div>
+        </div>
+      </div>
+
+      <div class="color-targets" role="group" aria-label="Choose which gradient color to edit">
+        <button type="button" class="color-target active" data-target="primary" aria-pressed="true">
+          <span class="target-swatch" id="primaryDot"></span>
+          <span class="target-text">
+            <span class="target-label">Primary</span>
+            <span class="target-hex" id="primaryHex">#1F3A68</span>
+          </span>
+        </button>
+        <button type="button" class="color-target" data-target="secondary" aria-pressed="false">
+          <span class="target-swatch" id="secondaryDot"></span>
+          <span class="target-text">
+            <span class="target-label">Secondary</span>
+            <span class="target-hex" id="secondaryHex">#C6A664</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="palette-head" id="paletteHead">
+        <span class="palette-title" id="paletteTitle">Primary palette</span>
+        <span class="palette-note" id="paletteNote">Sapphire</span>
+      </div>
+      <div class="palette" id="palette" role="group" aria-labelledby="paletteTitle">
+        <button type="button" class="swatch swatch-custom" id="customSwatch" title="Custom color" aria-label="Open custom color picker" aria-controls="customPicker" aria-expanded="false">
+          <span class="custom-ico" id="customIco"></span>
+        </button>
+      </div>
+      <p class="theme-hint" id="themeHint">Pick a suggested color, or open the custom picker.</p>
+      <section class="custom-picker" id="customPicker" hidden aria-labelledby="pickerTitle">
+        <div class="picker-head">
+          <span class="picker-title" id="pickerTitle">Custom primary</span>
+          <button type="button" class="picker-done" id="pickerDone">Done</button>
+        </div>
+        <div class="picker-sv" id="svArea" tabindex="0" aria-label="Saturation and brightness">
+          <div class="picker-sv-handle" id="svHandle"></div>
+        </div>
+        <div class="picker-hue" id="hueBar" tabindex="0" aria-label="Hue">
+          <div class="picker-hue-handle" id="hueHandle"></div>
+        </div>
+        <div class="picker-foot">
+          <span class="picker-preview" id="pickerPreview"></span>
+          <label class="picker-hex-label" for="hexInput">HEX</label>
+          <input class="picker-hex" id="hexInput" maxlength="7" autocomplete="off" spellcheck="false">
+        </div>
+      </section>
+    </div>
+    <div class="theme-foot">
+      <div class="gradient-strip" id="gradientStrip"></div>
+      <button class="btn" id="applyTheme">Apply Gradient</button>
+    </div>
   </section>
 
   <script src="js/db.js"></script>
