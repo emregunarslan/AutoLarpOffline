@@ -1,65 +1,35 @@
-// AutoLarp server: serves the site from public/ and stores accounts + cars in MongoDB.
+// AutoLarp server: serves the site from public/ and stores accounts + cars in a local JSON file.
 import express from 'express';
-import { MongoClient } from 'mongodb';
 import crypto from 'node:crypto';
-import fs from 'node:fs';
 import path from 'node:path';
-import readline from 'node:readline/promises';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import './public/js/brands.js';
+import { openStore } from './store.js';
 import { assistantRoutes } from './assistant.js';
 import { ttsRoutes } from './tts.js';
 import { geocodeRoutes } from './geocode.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const ENV_FILE = path.join(ROOT, '.env');
 const PORT = Number(process.env.PORT) || 8080;
 const SESSION_DAYS = 30;
 const scrypt = promisify(crypto.scrypt);
 
-// ---------- MongoDB connection string (asked for once, then kept in .env) ----------
+// ---------- Local storage: everything lives in data/autolarp.json ----------
 
-async function mongoUri() {
-  if (process.env.MONGODB_URI) return process.env.MONGODB_URI;
-  if (!process.stdin.isTTY) {
-    console.error('MONGODB_URI is not set. Add it to .env (see .env.example) and restart.');
-    process.exit(1);
-  }
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  console.log('\nFirst-time setup: paste your MongoDB connection string.');
-  console.log('It looks like mongodb+srv://user:password@cluster0.xxxxx.mongodb.net/\n');
-  const uri = (await rl.question('MongoDB URI: ')).trim();
-  rl.close();
-  if (!/^mongodb(\+srv)?:\/\//.test(uri)) {
-    console.error('That does not look like a MongoDB connection string.');
-    process.exit(1);
-  }
-  fs.appendFileSync(ENV_FILE, `MONGODB_URI=${uri}\n`, { mode: 0o600 });
-  console.log('Saved to .env — you will not be asked again.\n');
-  return uri;
+// Optional API keys are read from .env only — nothing asks for them at startup.
+for (const [name, feature] of [
+  ['GEMINI_API_KEY', 'the AI assistant'],
+  ['ELEVENLABS_API_KEY', "the assistant's voice replies"],
+]) {
+  if (!process.env[name]) console.log(`Optional: add ${name} to .env to enable ${feature} (see .env.example).`);
 }
 
-// Optional API keys, asked for once on first start (Enter skips; the feature stays off).
-async function askOnce(name, what, where) {
-  if (name in process.env || !process.stdin.isTTY) return;
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  console.log(`\nOptional: paste ${what} (from ${where}).`);
-  const key = (await rl.question(`${name} (Enter to skip): `)).trim();
-  rl.close();
-  fs.appendFileSync(ENV_FILE, `${name}=${key}\n`, { mode: 0o600 });
-  process.env[name] = key;
-  console.log(key ? 'Saved to .env.\n' : `Skipped — add ${name} to .env later to turn it on.\n`);
-}
+const store = await openStore(path.join(ROOT, 'data', 'autolarp.json'));
 
-const client = new MongoClient(await mongoUri());
-await askOnce('GEMINI_API_KEY', 'a Gemini API key to turn on the AI assistant', 'aistudio.google.com/apikey');
-await askOnce('ELEVENLABS_API_KEY', 'an ElevenLabs API key so the assistant reads replies aloud', 'elevenlabs.io → Developers → API Keys');
-await client.connect();
-const db = client.db(process.env.MONGODB_DB || 'autolarp');
-const users = db.collection('users');
-const sessions = db.collection('sessions');
-const cars = db.collection('cars');
+const users = store.collection('users');
+const sessions = store.collection('sessions');
+const cars = store.collection('cars');
 await users.createIndex({ username: 1 }, { unique: true });
 await sessions.createIndex({ tokenHash: 1 }, { unique: true });
 await sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
@@ -95,8 +65,6 @@ async function startSession(req, res, userId) {
   });
   setSessionCookie(req, res, token, SESSION_DAYS * 86400);
 }
-
-const publicUser = (u) => ({ username: u.username, name: u.name, avatar: u.avatar || null });
 
 // Simple in-memory brake on password guessing: 10 failures per 15 minutes.
 const failures = new Map();
@@ -143,6 +111,7 @@ function validateCar(body) {
   return car;
 }
 
+const publicUser = ({ username, name, avatar }) => ({ username, name, avatar: avatar || null });
 const publicCar = ({ _id, userId, ...car }) => car;
 
 // ---------- App ----------
@@ -155,13 +124,27 @@ app.use((req, res, next) => { req.body ??= {}; next(); });
 // Wrap async handlers so errors become a 500 instead of crashing.
 const route = (fn) => (req, res, next) => fn(req, res, next).catch(next);
 
+// Login is deactivated: every request is signed in automatically as the single
+// local user ("owner"), so the app works offline with no account screens.
+let localUser;
 async function requireUser(req, res, next) {
   const token = parseCookies(req).sid;
   const session = token && await sessions.findOne({ tokenHash: sha256(token), expiresAt: { $gt: new Date() } });
-  const user = session && await users.findOne({ _id: session.userId });
-  if (!user) return res.status(401).json({ error: 'Please log in' });
+  const user = (session && await users.findOne({ _id: session.userId })) ?? (localUser ??= await getOrCreateLocalUser());
+  if (!session) await startSession(req, res, user._id);
   req.user = user;
   next();
+}
+
+// The one local account, created on first use with an unguessable password so
+// it can't be logged into by hand (the /api/login route stays but is unused).
+async function getOrCreateLocalUser() {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const existing = await users.findOne({ username: 'owner' });
+  if (existing) return existing;
+  const { hash } = await hashPassword(crypto.randomBytes(32).toString('hex'), salt);
+  await users.insertOne({ username: 'owner', name: 'Owner', salt, hash, createdAt: new Date() });
+  return users.findOne({ username: 'owner' });
 }
 
 app.post('/api/signup', route(async (req, res) => {

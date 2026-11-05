@@ -1,4 +1,4 @@
-// Talks to the AutoLarp server; vehicles and profile live in MongoDB per account.
+// Talks to the AutoLarp server; vehicles and profile are stored locally on the server.
 const DB = (() => {
   async function api(method, path, body) {
     const res = await fetch(`/api${path}`, {
