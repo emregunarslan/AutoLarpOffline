@@ -1,7 +1,23 @@
 # AutoLarp
 Larping for cars.
 
-Live site: https://autolarp2.onrender.com/
+## About
+
+Ever wanted to know what it feels like to own a garage full of ridiculously expensive cars? Now you can (sort of).
+
+This app lets you **larp as the owner of luxury cars**. Simply launch the app, create an account, and add your dream cars to your virtual garage. From there, you can pretend that each car has its own dedicated mobile app, just like the ones offered by actual luxury car manufacturers.
+
+The goal is to mimic the experience of owning and managing high-end vehicles through a sleek, personal car app. There's just one catch: **it's all larp.** The app doesn't actually connect to, control, or do anything with real cars. It's purely for the experience.
+
+The live deployment is currently down, but you can still run the application locally by following the setup instructions below.
+
+## LarpHacks 2026 Submission
+
+Built by **Tanish Singh, Zain Aleem, and Emre Gunarslan** as a submission to **LarpHacks 2026**.
+
+The theme for this edition of LarpHacks was:
+
+> Tools to Help You Larp
 
 ## Run it
 
